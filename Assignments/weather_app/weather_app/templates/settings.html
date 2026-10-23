@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Settings - WeatherApp{% endblock %}
+
+{% block content %}
+<section class="page">
+    <h1 class="page-title">Settings</h1>
+
+    <div class="settings-card">
+        <div class="setting-row"><span>Name</span><strong>{{ user.name }}</strong></div>
+        <div class="setting-row"><span>Email</span><strong>{{ user.email }}</strong></div>
+        <div class="setting-row"><span>Temperature Unit</span><strong>Celsius (°C)</strong></div>
+        <div class="setting-actions">
+            <a class="btn-primary" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

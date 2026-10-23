@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Movie Night: {{ night.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-7">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('movie_detail', night_id=night.id) }}" class="text-secondary text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Back to Event</a></li>
+                    <li class="breadcrumb-item active text-warning" aria-current="page">Edit Details</li>
+                </ol>
+            </nav>
+
+            <div class="card card-cinema p-4 p-md-5">
+                <div class="mb-4">
+                    <span class="badge bg-secondary px-3 py-1.5 rounded-pill mb-2">Organizer Controls</span>
+                    <h1 class="h3 text-white fw-bold">Edit Movie Night</h1>
+                    <p class="text-secondary small">Update your event title, category, date, or description.</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('edit_movie_night', night_id=night.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label text-secondary small fw-bold">Movie Night Title *</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" id="title" name="title" value="{{ form_data.title if form_data else night.title }}" required maxlength="150">
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <!-- Date -->
+                        <div class="col-md-6">
+                            <label for="date" class="form-label text-secondary small fw-bold">Event Date *</label>
+                            <input type="date" class="form-control bg-dark text-light border-secondary" id="date" name="date" value="{{ form_data.date if form_data else (night.date.strftime('%Y-%m-%d') if night.date else '') }}" required>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="col-md-6">
+                            <label for="category" class="form-label text-secondary small fw-bold">Category *</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="category" name="category" required>
+                                {% set cur_cat = form_data.category if form_data else night.category %}
+                                <option value="Comedy" {% if cur_cat == 'Comedy' %}selected{% endif %}>Comedy</option>
+                                <option value="Action" {% if cur_cat == 'Action' %}selected{% endif %}>Action</option>
+                                <option value="Animation" {% if cur_cat == 'Animation' %}selected{% endif %}>Animation</option>
+                                <option value="Other" {% if cur_cat == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label for="description" class="form-label text-secondary small fw-bold">Description *</label>
+                        <textarea class="form-control bg-dark text-light border-secondary" id="description" name="description" rows="4" required>{{ form_data.description if form_data else night.description }}</textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-2 border-top border-secondary">
+                        <a href="{{ url_for('movie_detail', night_id=night.id) }}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+                        <button type="submit" class="btn btn-cinema rounded-pill px-4 fw-bold">
+                            <i class="bi bi-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

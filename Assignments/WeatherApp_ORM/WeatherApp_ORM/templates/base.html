@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}WeatherApp{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}<div class="toast-wrap">{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+  {% endwith %}
+  <div class="app">
+    <aside class="sidebar">
+      <a class="logo" href="{{ url_for('dashboard') }}"><i class="bi bi-cloud-sun-fill logo-icon"></i><span class="logo-text">Weather<b>App</b></span></a>
+      <nav class="nav">
+        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}"><i class="bi bi-house-door-fill"></i><span>Home</span></a>
+        <a class="nav-link {% if request.endpoint == 'search' %}active{% endif %}" href="{{ url_for('search') }}"><i class="bi bi-search"></i><span>Search</span></a>
+        <a class="nav-link {% if request.endpoint == 'cities' %}active{% endif %}" href="{{ url_for('cities') }}"><i class="bi bi-geo-alt-fill"></i><span>My Cities</span></a>
+        <a class="nav-link {% if request.endpoint == 'history' %}active{% endif %}" href="{{ url_for('history') }}"><i class="bi bi-clock-history"></i><span>History</span></a>
+        <a class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}" href="{{ url_for('settings') }}"><i class="bi bi-gear-fill"></i><span>Settings</span></a>
+      </nav>
+      <div class="sidebar-bottom"><div class="slogan"><i class="bi bi-brightness-alt-high"></i><p>Better Weather<br>Brighter Days</p></div></div>
+    </aside>
+    <main class="main">
+      <div class="user-chip"><div class="user-btn"><span class="avatar"><i class="bi bi-person-fill"></i></span><span class="user-text"><small>Welcome</small><strong>Guest</strong></span></div></div>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

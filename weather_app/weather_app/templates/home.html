@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="home-wrap" id="home" data-default-city="{{ default_city }}">
+
+  <!-- Top row: greeting (left) + search (right) + welcome user -->
+  <header class="home-top">
+    <div class="greeting">
+      <svg viewBox="0 0 64 64" width="54" height="54">
+        <g stroke="#FFC83D" stroke-width="4" stroke-linecap="round">
+          <line x1="32" y1="4" x2="32" y2="12"/><line x1="32" y1="52" x2="32" y2="60"/>
+          <line x1="4" y1="32" x2="12" y2="32"/><line x1="52" y1="32" x2="60" y2="32"/>
+          <line x1="12" y1="12" x2="18" y2="18"/><line x1="46" y1="46" x2="52" y2="52"/>
+          <line x1="12" y1="52" x2="18" y2="46"/><line x1="46" y1="18" x2="52" y2="12"/>
+        </g>
+        <circle cx="32" cy="32" r="12" fill="#FFC83D"/>
+      </svg>
+      <div>
+        <h1 id="greeting">Good Morning!</h1>
+        <p>Check the weather for your location or search for any city.</p>
+      </div>
+    </div>
+
+    <div class="home-right">
+      {% include "_search_box.html" %}
+    </div>
+
+    <div class="welcome">
+      <div class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg></div>
+      <div><small>Welcome</small><strong>{{ user_name }}</strong></div>
+      <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+  </header>
+
+  <!-- Middle row: current weather + highlights -->
+  <section class="home-grid">
+    <div class="glass-card current-card" id="current-card"><p class="loading">Loading weather...</p></div>
+    <div class="glass-card highlights-card" id="highlights-card"></div>
+  </section>
+
+  <!-- Bottom row: 5 day forecast -->
+  <section class="forecast-panel" id="forecast-panel"></section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+{% endblock %}

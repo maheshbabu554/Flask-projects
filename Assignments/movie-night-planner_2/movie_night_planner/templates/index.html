@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Movie Nights{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-cinema text-center mb-4">
+    <div class="container">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3 shadow-sm">
+            <i class="bi bi-stars me-1"></i> Community Movie Nights
+        </span>
+        <h1 class="display-5 fw-bold text-white mb-3">Vote. Decide. Watch Together.</h1>
+        <p class="lead text-secondary mx-auto mb-4" style="max-width: 640px;">
+            Create a movie night, suggest your favorite films with real posters and trailers, let friends vote, and lock in the winning movie.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            {% if session.get('user_id') %}
+                <a href="{{ url_for('create_movie_night') }}" class="btn btn-cinema btn-lg px-4 rounded-pill shadow">
+                    <i class="bi bi-plus-lg me-1"></i> Host a Movie Night
+                </a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-cinema btn-lg px-4 rounded-pill shadow">
+                    <i class="bi bi-person-plus me-1"></i> Get Started Free
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4 rounded-pill">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Log In
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Filter & Search Section -->
+<div class="container mb-5">
+    <div class="card card-cinema p-3 p-md-4 mb-4">
+        <form method="GET" action="{{ url_for('index') }}" class="row g-3 align-items-end">
+            <!-- Search by Title Input -->
+            <div class="col-md-5">
+                <label for="searchInput" class="form-label text-secondary small fw-bold text-uppercase">Search by Title</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control bg-dark text-light border-secondary" id="searchInput" name="q" placeholder="e.g. Comedy Weekend, Sci-Fi Night..." value="{{ search_query }}">
+                </div>
+            </div>
+
+            <!-- Filter by Category Dropdown -->
+            <div class="col-md-4">
+                <label for="categorySelect" class="form-label text-secondary small fw-bold text-uppercase">Filter Category</label>
+                <select class="form-select bg-dark text-light border-secondary" id="categorySelect" name="category">
+                    <option value="" {% if not selected_category %}selected{% endif %}>All Categories</option>
+                    <option value="Comedy" {% if selected_category == 'Comedy' %}selected{% endif %}>Comedy</option>
+                    <option value="Action" {% if selected_category == 'Action' %}selected{% endif %}>Action</option>
+                    <option value="Animation" {% if selected_category == 'Animation' %}selected{% endif %}>Animation</option>
+                    <option value="Other" {% if selected_category == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+
+            <!-- Submit & Reset Buttons -->
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-cinema w-100 fw-semibold">
+                    <i class="bi bi-funnel me-1"></i> Apply Filter
+                </button>
+                {% if search_query or selected_category %}
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary" title="Reset Filters">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+
+        {% if search_query or selected_category %}
+            <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top border-secondary">
+                <span class="text-secondary small">Active filters:</span>
+                {% if search_query %}
+                    <span class="badge bg-secondary text-light">Title: "{{ search_query }}"</span>
+                {% endif %}
+                {% if selected_category %}
+                    <span class="badge bg-secondary text-light">Category: {{ selected_category }}</span>
+                {% endif %}
+                <a href="{{ url_for('index') }}" class="text-warning small text-decoration-none ms-auto">
+                    <i class="bi bi-arrow-counterclockwise"></i> Clear All
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Movie Nights Grid Section -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="h4 text-light fw-bold m-0 d-flex align-items-center gap-2">
+            <i class="bi bi-film text-warning"></i>
+            Movie Nights
+            <span class="badge bg-secondary text-light fs-6 fw-normal">{{ movie_nights|length }}</span>
+        </h2>
+        {% if session.get('user_id') %}
+            <a href="{{ url_for('create_movie_night') }}" class="btn btn-outline-cinema btn-sm rounded-pill">
+                <i class="bi bi-plus-lg me-1"></i> Plan New Night
+            </a>
+        {% endif %}
+    </div>
+
+    {% if movie_nights %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for night in movie_nights %}
+                <div class="col">
+                    <div class="card card-cinema h-100 d-flex flex-column">
+                        <div class="card-body d-flex flex-column">
+                            <!-- Category and Status Badges -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge badge-category rounded-pill px-2.5 py-1">
+                                    {{ night.category }}
+                                </span>
+                                {% if night.status == 'finalized' %}
+                                    <span class="badge badge-finalized rounded-pill px-2.5 py-1 d-flex align-items-center gap-1">
+                                        <i class="bi bi-trophy-fill text-warning"></i> Finalized
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-open rounded-pill px-2.5 py-1 d-flex align-items-center gap-1">
+                                        <i class="bi bi-check2-circle text-success"></i> Voting Open
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Title -->
+                            <h3 class="card-title h5 text-white fw-bold mb-2">
+                                <a href="{{ url_for('movie_detail', night_id=night.id) }}" class="text-white text-decoration-none hover-warning">
+                                    {{ night.title }}
+                                </a>
+                            </h3>
+
+                            <!-- Date & Creator -->
+                            <div class="d-flex flex-column gap-1 text-secondary small mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-calendar3 text-warning"></i>
+                                    <span>Date: <strong class="text-light">{{ night.date.strftime('%B %d, %Y') if night.date else 'Date TBA' }}</strong></span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-person text-warning"></i>
+                                    <span>Created by: <span class="text-light">{{ night.creator_name }}</span></span>
+                                </div>
+                            </div>
+
+                            <!-- Description Snippet -->
+                            <p class="card-text text-secondary small flex-grow-1 mb-3">
+                                {{ night.description | truncate(110, True, '...') }}
+                            </p>
+
+                            <!-- Final Winner Highlight (If Finalized) -->
+                            {% if night.status == 'finalized' and night.final_movie_title %}
+                                <div class="p-2 mb-3 rounded bg-dark border border-warning d-flex align-items-center gap-2">
+                                    <i class="bi bi-award-fill text-warning fs-5"></i>
+                                    <div class="small text-truncate">
+                                        <span class="text-secondary d-block" style="font-size: 0.75rem;">Selected Winner:</span>
+                                        <strong class="text-warning text-truncate d-block">{{ night.final_movie_title }}</strong>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- Card Footer Action -->
+                            <div class="pt-3 border-top border-secondary d-flex justify-content-between align-items-center mt-auto">
+                                <span class="text-secondary small d-flex align-items-center gap-1">
+                                    <i class="bi bi-collection text-secondary"></i>
+                                    {{ night.choice_count }} movie choice{{ 's' if night.choice_count != 1 else '' }}
+                                </span>
+                                <a href="{{ url_for('movie_detail', night_id=night.id) }}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                                    View Details <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="card card-cinema p-5 text-center my-4">
+            <div class="mb-3">
+                <i class="bi bi-film text-secondary" style="font-size: 3.5rem;"></i>
+            </div>
+            <h3 class="h4 text-light fw-bold">No Movie Nights Found</h3>
+            <p class="text-secondary mx-auto mb-4" style="max-width: 480px;">
+                {% if search_query or selected_category %}
+                    No movie nights match your active filters. Try adjusting your search query or reset the filters.
+                {% else %}
+                    No movie nights have been planned yet. Be the first to create one!
+                {% endif %}
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                {% if search_query or selected_category %}
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-light rounded-pill px-4">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Filters
+                    </a>
+                {% endif %}
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('create_movie_night') }}" class="btn btn-cinema rounded-pill px-4">
+                        <i class="bi bi-plus-lg me-1"></i> Plan a Movie Night
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-cinema rounded-pill px-4">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Log In to Host
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

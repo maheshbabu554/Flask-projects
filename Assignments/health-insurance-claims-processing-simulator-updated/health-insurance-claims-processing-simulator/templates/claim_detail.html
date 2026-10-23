@@ -1,0 +1,500 @@
+{% extends "base.html" %}
+
+{% block title %}Claim #{{ claim.claim_id }} - Audit & Adjudication{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-3">
+    <div class="col-md-7">
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h2 class="page-title mb-0">Claim #{{ claim.claim_id }}</h2>
+            <span class="badge-status badge-{{ claim.status }} fs-6">
+                {{ claim.status.replace('_', ' ') }}
+            </span>
+            <span class="badge bg-light text-dark border text-capitalize">
+                {{ claim.claim_type }}
+            </span>
+        </div>
+        <div class="page-description">
+            Member: <strong>{{ claim.member.display_name }}</strong> · Hospital: <strong>{{ claim.hospital.name }}</strong>
+        </div>
+    </div>
+    <div class="col-md-5 text-md-end mt-2 mt-md-0">
+        <a href="{{ url_for('claims') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Claims
+        </a>
+    </div>
+</div>
+
+<!-- Duplicate Warning Banner (BRD Case: Claims 1011 and 1012) -->
+{% if eligibility.has_duplicate_warning %}
+<div class="alert alert-warning card-custom mb-3" role="alert">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle-fill fs-4 text-warning me-3"></i>
+        <div>
+            <strong>Potential Duplicate Claim Alert:</strong>
+            This claim shares identical member, hospital, admission date, and requested amount with claim(s) 
+            <strong>#{{ eligibility.duplicate_ids | join(', #') }}</strong>.
+            Please verify prior to approval.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Future Admission Date Notice (BRD Case: Claim 1013) -->
+{% if claim.admission_date > today_date %}
+<div class="alert alert-danger card-custom mb-3" role="alert">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-calendar-x fs-4 text-danger me-3"></i>
+        <div>
+            <strong>Future Admission Date Detected:</strong>
+            Admission date is {{ claim.admission_date | date_format }}, which is in the future.
+            Submission is blocked until the admission date is valid.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    
+    <!-- Left Column: Claim Details, Eligibility Checks, Documents, Payout -->
+    <div class="col-lg-8">
+        
+        <!-- 1. Claim & Policy Core Information -->
+        <div class="card card-custom mb-4">
+            <div class="card-header card-header-clean">
+                <span class="fw-bold">
+                    <i class="bi bi-file-earmark-medical text-primary me-2"></i>Claim & Patient Particulars
+                </span>
+                <span class="text-muted small">Policy #{{ claim.policy_id }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="small text-muted d-block">Patient / Beneficiary</label>
+                        <strong class="text-navy">{{ claim.member.display_name }}</strong>
+                        <div class="text-muted small text-capitalize">{{ claim.member.relationship }} to Policyholder</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small text-muted d-block">Policyholder</label>
+                        <strong class="text-navy">{{ claim.policy.holder_user.display_name }}</strong>
+                        <div class="text-muted small">User ID: {{ claim.policy.holder_user_id }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small text-muted d-block">Insurance Plan</label>
+                        <strong class="text-navy">{{ claim.policy.plan.plan_name }}</strong>
+                        <div class="text-muted small text-capitalize">Covers {{ claim.policy.plan.covered_treatment_types.replace('|', ' & ') }}</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="small text-muted d-block">Treating Hospital</label>
+                        <strong class="text-navy">{{ claim.hospital.name }}</strong>
+                        <div class="small">
+                            {{ claim.hospital.city }} · 
+                            <span class="{{ 'text-success fw-semibold' if claim.hospital.is_network() else 'text-muted' }}">
+                                {{ 'Empanelled Network' if claim.hospital.is_network() else 'Non-Network' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small text-muted d-block">Treatment & Admission</label>
+                        <strong class="text-capitalize text-navy">{{ claim.treatment_type }}</strong>
+                        <div class="text-muted small">{{ claim.admission_date | date_format }} to {{ claim.discharge_date | date_format }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small text-muted d-block">Requested Amount</label>
+                        <strong class="text-primary fs-5 tabular-nums">{{ claim.requested_amount_inr | currency }}</strong>
+                        <div class="text-muted small">Submitted Claim Value</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Automated Eligibility Rules Engine -->
+        <div class="card card-custom mb-4">
+            <div class="card-header card-header-clean">
+                <span class="fw-bold">
+                    <i class="bi bi-shield-check text-primary me-2"></i>Automated Eligibility Verification Checks
+                </span>
+                <span class="badge {{ 'bg-success-subtle text-success border border-success-subtle' if eligibility.all_passed else 'bg-danger-subtle text-danger border border-danger-subtle' }}">
+                    {{ 'All Rules Passed' if eligibility.all_passed else 'Issues Detected' }}
+                </span>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for check in eligibility.checks %}
+                    <div class="list-group-item d-flex align-items-start py-3 px-3">
+                        <div class="me-3 mt-1">
+                            {% if check.passed %}
+                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                            {% elif check.is_warning_only %}
+                            <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+                            {% else %}
+                            <i class="bi bi-x-circle-fill text-danger fs-5"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-navy">{{ check.rule }}</strong>
+                                <span class="badge {{ 'bg-success-subtle text-success' if check.passed else ('bg-warning-subtle text-warning' if check.is_warning_only else 'bg-danger-subtle text-danger') }} small">
+                                    {{ 'PASSED' if check.passed else ('WARNING' if check.is_warning_only else 'FAILED') }}
+                                </span>
+                            </div>
+                            <div class="small text-muted mt-1">{{ check.details }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Document Checklist & Evidence Status -->
+        <div class="card card-custom mb-4">
+            <div class="card-header card-header-clean">
+                <span class="fw-bold">
+                    <i class="bi bi-files text-primary me-2"></i>Required Document Checklist
+                </span>
+                <span class="text-muted small">Mandatory for claim assessment</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for doc in claim.documents %}
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong class="text-navy text-capitalize d-block">
+                                    {{ doc.document_type.replace('_', ' ') }}
+                                </strong>
+                                <span class="badge {{ 'bg-success-subtle text-success border border-success-subtle' if doc.checklist_status == 'received' else 'bg-danger-subtle text-danger border border-danger-subtle' }} text-capitalize">
+                                    <i class="bi bi-{{ 'check' if doc.checklist_status == 'received' else 'x' }} me-1"></i>
+                                    {{ doc.checklist_status }}
+                                </span>
+                            </div>
+                            
+                            <!-- Toggle Document Status Form (Allow Creator / Officer to update) -->
+                            {% if claim.status in ['draft', 'more_info', 'in_review'] %}
+                            <form method="POST" action="{{ url_for('toggle_document', claim_id=claim.claim_id) }}">
+                                <input type="hidden" name="document_type" value="{{ doc.document_type }}">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Toggle status">
+                                    Mark as {{ 'Missing' if doc.checklist_status == 'received' else 'Received' }}
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Payout Breakdown & Settlement Calculator -->
+        <div class="card card-custom mb-4">
+            <div class="card-header card-header-clean">
+                <span class="fw-bold">
+                    <i class="bi bi-calculator text-primary me-2"></i>Financial Payout & Deductions Breakdown
+                </span>
+                <span class="text-muted small">
+                    Formula: (Eligible - Deductible) × (1 - Copay %)
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 text-center mb-3">
+                    <div class="col-md-3">
+                        <div class="p-2 border rounded bg-white">
+                            <span class="small text-muted d-block">Approved Eligible</span>
+                            <strong class="fs-6 text-navy tabular-nums">{{ payout.eligible_amount | currency }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-2 border rounded bg-white">
+                            <span class="small text-muted d-block">Deductible Applied</span>
+                            <strong class="fs-6 text-danger tabular-nums">- {{ payout.deductible_applied | currency }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-2 border rounded bg-white">
+                            <span class="small text-muted d-block">Co-Pay ({{ payout.copay_percent }}%)</span>
+                            <strong class="fs-6 text-danger tabular-nums">- {{ payout.copay_amount | currency }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-2 border rounded bg-light border-teal">
+                            <span class="small text-muted d-block">Simulated Payout</span>
+                            <strong class="fs-5 text-teal tabular-nums" style="color: #087F8C;">{{ payout.final_payout | currency }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                {% if claim.settlement %}
+                <div class="alert alert-success card-custom mb-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bi bi-check2-circle fs-4 text-success me-2 align-middle"></i>
+                        <strong>Simulated Settlement Recorded:</strong>
+                        Disbursement of <span class="tabular-nums fw-bold">{{ claim.settlement.amount_inr | currency }}</span> 
+                        payable to <span class="text-capitalize fw-bold">{{ claim.settlement.payee_type }}</span>.
+                    </div>
+                    <span class="small text-muted">Settled on {{ claim.settlement.recorded_date | date_format }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Column: Workflow Actions & History Timeline -->
+    <div class="col-lg-4">
+        
+        <!-- Role-Specific Action Controls -->
+        <div class="card card-custom mb-4">
+            <div class="card-header card-header-clean bg-light">
+                <span class="fw-bold text-navy">
+                    <i class="bi bi-play-circle text-primary me-2"></i>Permitted Actions
+                </span>
+                <span class="badge bg-white text-muted border text-capitalize">{{ user.role.replace('_', ' ') }}</span>
+            </div>
+            <div class="card-body p-3">
+
+                <!-- Policyholder / Hospital Desk Actions -->
+                {% if user.role in [ROLE_POLICYHOLDER, ROLE_HOSPITAL] %}
+                    {% if claim.status == 'draft' %}
+                        <form method="POST" action="{{ url_for('claim_submit', claim_id=claim.claim_id) }}" class="mb-2">
+                            <button type="submit" class="btn btn-teal w-100" {{ 'disabled' if claim.admission_date > today_date }}>
+                                <i class="bi bi-send-fill me-1"></i> Submit Claim for Review
+                            </button>
+                        </form>
+                        <a href="{{ url_for('claim_edit', claim_id=claim.claim_id) }}" class="btn btn-outline-navy w-100">
+                            <i class="bi bi-pencil-square me-1"></i> Edit Claim Draft
+                        </a>
+                    {% elif claim.status == 'more_info' %}
+                        <div class="alert alert-warning small mb-3">
+                            <strong>Action Required:</strong> The claims officer requested additional details.
+                        </div>
+                        <form method="POST" action="{{ url_for('claim_submit', claim_id=claim.claim_id) }}" class="mb-2">
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold">Response / Clarification Note</label>
+                                <textarea name="note" class="form-control form-control-sm" rows="2" placeholder="e.g. Uploaded discharge summary; medical bill updated." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-teal w-100">
+                                <i class="bi bi-arrow-repeat me-1"></i> Resubmit Claim
+                            </button>
+                        </form>
+                    {% else %}
+                        <div class="text-center py-2 text-muted small">
+                            <i class="bi bi-shield-lock me-1"></i>
+                            Claim is in <strong>{{ claim.status.replace('_', ' ') }}</strong> status. No pending actions required from creator.
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                <!-- Claims Officer Actions -->
+                {% if user.role in [ROLE_CLAIMS_OFFICER, ROLE_ADMIN] %}
+                    {% if claim.status == 'submitted' and user.role == ROLE_CLAIMS_OFFICER %}
+                        <form method="POST" action="{{ url_for('claim_assign', claim_id=claim.claim_id) }}" class="mb-2">
+                            <button type="submit" class="btn btn-teal w-100">
+                                <i class="bi bi-person-check-fill me-1"></i> Assign to Me & Start Review
+                            </button>
+                        </form>
+                    {% elif claim.status == 'in_review' %}
+                        <div class="d-grid gap-2">
+                            <!-- Approve Modal Trigger -->
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal">
+                                <i class="bi bi-check-lg me-1"></i> Approve Claim
+                            </button>
+
+                            {% if user.role == ROLE_CLAIMS_OFFICER %}
+                            <!-- Request Info Modal Trigger -->
+                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#moreInfoModal">
+                                <i class="bi bi-question-circle me-1"></i> Request More Info
+                            </button>
+                            {% endif %}
+
+                            <!-- Reject Modal Trigger -->
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                                <i class="bi bi-x-lg me-1"></i> Reject Claim
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-2 text-muted small">
+                            <i class="bi bi-lock-fill me-1"></i>
+                            Claim adjudication finalized (Status: {{ claim.status.replace('_', ' ') }}).
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                <!-- Administrator Actions -->
+                {% if user.role == ROLE_ADMIN %}
+                    {% if claim.status == 'approved' and not claim.settlement %}
+                        <form method="POST" action="{{ url_for('claim_settle', claim_id=claim.claim_id) }}">
+                            <p class="small text-muted mb-2">
+                                Execute simulated financial disbursement of <strong>{{ payout.final_payout | currency }}</strong>.
+                            </p>
+                            <button type="submit" class="btn btn-teal w-100">
+                                <i class="bi bi-cash-stack me-1"></i> Record Simulated Settlement
+                            </button>
+                        </form>
+                    {% elif claim.status == 'paid' %}
+                        <div class="text-center py-2 text-success small fw-semibold">
+                            <i class="bi bi-check-circle-fill me-1"></i> Settlement complete and recorded in audit ledger.
+                        </div>
+                    {% else %}
+                        <div class="text-center py-2 text-muted small">
+                            Administrator oversight mode. Workflow is handled by claims officers until approval.
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+            </div>
+        </div>
+
+        <!-- 5. Complete Audit Trail / History Timeline -->
+        <div class="card card-custom">
+            <div class="card-header card-header-clean">
+                <span class="fw-bold">
+                    <i class="bi bi-clock-history text-primary me-2"></i>Audit Trail & Event History
+                </span>
+            </div>
+            <div class="card-body p-3">
+                <ul class="timeline mb-0">
+                    {% for h in claim.history %}
+                    <li class="timeline-item">
+                        <div class="d-flex justify-content-between align-items-baseline">
+                            <span class="fw-bold text-navy small">
+                                {{ h.to_status.replace('_', ' ').title() }}
+                            </span>
+                            <span class="timeline-date">{{ h.event_date | date_format }}</span>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="small">{{ h.note }}</div>
+                            <div class="text-muted" style="font-size: 0.72rem;">
+                                Actor: {{ h.actor.display_name if h.actor else 'System' }} 
+                                ({{ h.actor.role.replace('_', ' ') if h.actor else 'Automated' }})
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Approval Modal (Claims Officer / Admin) -->
+{% if user.role in [ROLE_CLAIMS_OFFICER, ROLE_ADMIN] and claim.status == 'in_review' %}
+<div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ url_for('claim_approve', claim_id=claim.claim_id) }}" class="modal-content card-custom">
+            <div class="modal-header bg-success-subtle">
+                <h5 class="modal-title text-success fw-bold" id="approveModalLabel">
+                    <i class="bi bi-check-circle me-1"></i> Approve Claim #{{ claim.claim_id }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Eligible Approved Amount (INR)</label>
+                    <input type="number" step="0.01" class="form-control" name="eligible_amount" id="eligible_amount_input"
+                           value="{{ claim.requested_amount_inr }}" max="{{ policy_summary.remaining_cover if policy_summary.remaining_cover < claim.requested_amount_inr else claim.requested_amount_inr }}" min="1"
+                           data-deductible="{{ claim.policy.plan.deductible_inr }}"
+                           data-copay="{{ claim.policy.plan.copay_percent }}" required>
+                    <div class="form-text small text-muted">Requested: {{ claim.requested_amount_inr | currency }}. Remaining policy cover: {{ policy_summary.remaining_cover | currency }}. Approval is capped at the lower of these values.</div>
+                </div>
+
+                <!-- Live calculation preview in modal -->
+                <div class="p-3 bg-light rounded border mb-3 small">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Deductible Applied:</span>
+                        <span class="fw-semibold text-danger tabular-nums" id="preview_deductible_amount">—</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Co-Pay Deduction ({{ claim.policy.plan.copay_percent }}%):</span>
+                        <span class="fw-semibold text-danger tabular-nums" id="preview_copay_amount">—</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-top pt-1 mt-1">
+                        <strong class="text-navy">Simulated Net Payout:</strong>
+                        <strong class="text-success tabular-nums" id="preview_payout_amount">—</strong>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Approval Rationale & Note</label>
+                    <textarea name="reason" class="form-control" rows="3" placeholder="Explain the assessment and why the evidence supports this amount." required></textarea>
+                </div>
+                <div class="mb-1">
+                    <label class="form-label small fw-semibold">Supporting Evidence Reference</label>
+                    <input type="text" name="evidence_reference" class="form-control" maxlength="255" placeholder="Verified bill, discharge summary, or document reference" required>
+                    <div class="form-text">Evidence does not override requested amount or remaining coverage limits.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success btn-sm">Confirm Approval</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Request Info Modal -->
+<div class="modal fade" id="moreInfoModal" tabindex="-1" aria-labelledby="moreInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ url_for('claim_request_info', claim_id=claim.claim_id) }}" class="modal-content card-custom">
+            <div class="modal-header bg-warning-subtle">
+                <h5 class="modal-title text-warning-emphasis fw-bold" id="moreInfoModalLabel">
+                    <i class="bi bi-question-circle me-1"></i> Request Missing Information
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="small text-muted mb-3">
+                    Explain what documentation or clarification is missing from the patient or treating facility.
+                </p>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Requirement Details & Reason</label>
+                    <textarea name="reason" class="form-control" rows="3" placeholder="e.g. Detailed discharge summary with physician notes and itemized diagnostic receipts required." required></textarea>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="mark_summary_missing" id="markSummaryMissing" value="1" checked>
+                    <label class="form-check-label small" for="markSummaryMissing">
+                        Flag Discharge Summary checklist item as 'Missing'
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-warning btn-sm">Send Request</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ url_for('claim_reject', claim_id=claim.claim_id) }}" class="modal-content card-custom">
+            <div class="modal-header bg-danger-subtle">
+                <h5 class="modal-title text-danger fw-bold" id="rejectModalLabel">
+                    <i class="bi bi-x-circle me-1"></i> Reject Claim #{{ claim.claim_id }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="small text-muted mb-3">
+                    Document the exact policy clause, exclusions, or eligibility failure triggering claim rejection.
+                </p>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Rejection Reason</label>
+                    <textarea name="reason" class="form-control" rows="3" placeholder="State the specific policy or documentation reason for rejection." required></textarea>
+                    <label class="form-label small fw-semibold mt-2">Evidence / Document Reference (optional)</label>
+                    <input type="text" name="evidence_reference" class="form-control" maxlength="255" placeholder="Document reference">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger btn-sm">Confirm Rejection</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

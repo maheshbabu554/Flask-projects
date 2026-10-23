@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}My Cities{% endblock %}
+
+{% block content %}
+<div class="light-page">
+  <div class="title-row">
+    <h1 class="page-title">My Cities</h1>
+    <button class="btn-primary" id="add-city-btn">+ Add City</button>
+  </div>
+
+  <div id="city-list" class="city-list"><p class="loading dark">Loading cities...</p></div>
+</div>
+
+<!-- Pop-up window used by "Add City" -->
+<div class="modal" id="add-modal">
+  <div class="modal-box">
+    <div class="title-row">
+      <h2>Add a city</h2>
+      <button class="icon-btn" id="close-modal" aria-label="Close">&times;</button>
+    </div>
+    {% include "_search_box.html" %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cities.js') }}"></script>
+{% endblock %}

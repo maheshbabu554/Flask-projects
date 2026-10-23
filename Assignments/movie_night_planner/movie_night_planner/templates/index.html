@@ -1,0 +1,111 @@
+
+{% extends "base.html" %}
+{% block title %}Browse Movie Nights{% endblock %}
+
+{% block content %}
+<section class="hero-section rounded-4 p-4 p-md-5 mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <p class="text-warning fw-bold mb-2">YOUR NEXT MOVIE NIGHT STARTS HERE</p>
+            <h1 class="display-5 fw-bold">Choose a movie. Vote together.</h1>
+            <p class="lead mb-3">
+                Create a plan, suggest movies, and let your friends decide.
+            </p>
+            {% if user %}
+                <a href="{{ url_for('create_night') }}" class="btn btn-warning btn-lg">
+                    + Create Movie Night
+                </a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-warning btn-lg">
+                    Get Started
+                </a>
+            {% endif %}
+        </div>
+        <div class="col-md-4 text-center display-1 mt-3 mt-md-0">🍿 🎬</div>
+    </div>
+</section>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h2 class="fw-bold mb-1">Explore Movie Nights</h2>
+        <p class="text-secondary mb-0">Discover plans and help choose the movie.</p>
+    </div>
+</div>
+
+<form method="GET" action="{{ url_for('index') }}" class="card card-body mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label for="q" class="form-label">Search by title</label>
+            <input type="search" class="form-control" id="q" name="q"
+                   value="{{ search }}" placeholder="e.g. Friday Movie Night">
+        </div>
+        <div class="col-md-4">
+            <label for="category" class="form-label">Category</label>
+            <select class="form-select" id="category" name="category">
+                <option value="">All categories</option>
+                {% for item in categories %}
+                    <option value="{{ item }}" {% if category == item %}selected{% endif %}>
+                        {{ item }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 d-grid gap-2">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </div>
+</form>
+
+{% if nights %}
+    <div class="row g-4">
+        {% for night in nights %}
+            <div class="col-md-6 col-lg-4">
+                <article class="card night-card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <span class="badge text-bg-primary">{{ night.category }}</span>
+                            {% if night.is_finalized %}
+                                <span class="badge text-bg-success">Finalized</span>
+                            {% else %}
+                                <span class="badge text-bg-warning">Voting open</span>
+                            {% endif %}
+                        </div>
+
+                        <h3 class="h4">{{ night.title }}</h3>
+                        <p class="text-secondary small mb-2">
+                            📅 {{ night.night_date.strftime('%d %b %Y') }}
+                            <br>Created by {{ night.creator_name }}
+                        </p>
+                        <p>{{ night.description }}</p>
+
+                        {% if night.final_movie_title %}
+                            <div class="alert alert-success py-2">
+                                🏆 Final movie: <strong>{{ night.final_movie_title }}</strong>
+                            </div>
+                        {% endif %}
+
+                        <div class="small text-secondary mb-3">
+                            {{ night.choice_count }} choices · {{ night.vote_count }} votes
+                        </div>
+                        <a href="{{ url_for('night_detail', night_id=night.id) }}"
+                           class="btn btn-dark mt-auto">View Details</a>
+                    </div>
+                </article>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state text-center p-5 rounded-4">
+        <div class="display-3">🔎</div>
+        <h3 class="mt-3">No movie nights found</h3>
+        <p class="text-secondary">
+            Try another search or category, or reset the filters.
+        </p>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">Clear filters</a>
+        {% if user %}
+            <a href="{{ url_for('create_night') }}" class="btn btn-primary">Create a night</a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

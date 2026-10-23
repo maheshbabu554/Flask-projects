@@ -1,0 +1,6 @@
+{
+  "name": "Health Insurance Claims Processing Simulator",
+  "description": "Full-stack Flask and SQLAlchemy simulation platform for health insurance claims lifecycle management, role-based workflows, and claims adjudication.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

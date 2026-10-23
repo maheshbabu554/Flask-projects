@@ -1,0 +1,37 @@
+
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="form-card card shadow-sm mx-auto">
+    <div class="card-body p-4 p-md-5">
+        <h1 class="h2 fw-bold mb-2">Welcome back</h1>
+        <p class="text-secondary mb-4">Log in to create plans and vote.</p>
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input class="form-control" id="username" name="username"
+                       autocomplete="username" required
+                       value="{{ request.form.get('username', '') }}">
+            </div>
+
+            <div class="mb-4">
+                <label for="password" class="form-label">Password</label>
+                <input class="form-control" type="password" id="password"
+                       name="password" autocomplete="current-password" required>
+            </div>
+
+            <button class="btn btn-primary w-100" type="submit">Log in</button>
+        </form>
+
+        <p class="text-center mt-4 mb-0">
+            New here? <a href="{{ url_for('register') }}">Create an account</a>
+        </p>
+
+        <div class="alert alert-info mt-4 mb-0 small">
+            Demo account: <strong>demo</strong> / <strong>Demo123!</strong>
+        </div>
+    </div>
+</div>
+{% endblock %}

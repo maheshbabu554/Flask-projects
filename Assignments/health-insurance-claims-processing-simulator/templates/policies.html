@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Policies - Claims Simulator{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-3">
+    <div class="col-md-8">
+        <h2 class="page-title">
+            <i class="bi bi-shield-shaded me-1 text-primary"></i> 
+            {{ 'My Health Insurance Policies' if user.role == ROLE_POLICYHOLDER else 'Policy Registry & Limits' }}
+        </h2>
+        <div class="page-description">
+            Inspect active plans, covered family members, annual limits, deductibles, and remaining coverage.
+        </div>
+    </div>
+    {% if user.role == ROLE_POLICYHOLDER %}
+    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+        <a href="{{ url_for('claim_new') }}" class="btn btn-teal">
+            <i class="bi bi-plus-circle me-1"></i> File Reimbursement Claim
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Help / Guide Card -->
+<div class="help-card card-custom">
+    <div class="help-card-header" data-bs-toggle="collapse" data-bs-target="#policyHelpCollapse">
+        <div class="help-card-title">
+            <i class="bi bi-info-circle-fill text-info"></i>
+            <span>Understanding Policy Limits & Terms (Click to Expand / Collapse)</span>
+        </div>
+        <i class="bi bi-chevron-down text-muted"></i>
+    </div>
+    <div class="collapse show mt-2 pt-2 border-top" id="policyHelpCollapse">
+        <div class="row g-3 small text-muted">
+            <div class="col-md-4">
+                <strong><i class="bi bi-wallet2 text-primary me-1"></i> Deductible:</strong>
+                The initial out-of-pocket amount applied before insurance benefits commence. Subtracted from the approved eligible amount.
+            </div>
+            <div class="col-md-4">
+                <strong><i class="bi bi-percent text-primary me-1"></i> Co-Pay:</strong>
+                A fixed percentage of the post-deductible bill that the insured member pays.
+            </div>
+            <div class="col-md-4">
+                <strong><i class="bi bi-piggy-bank text-primary me-1"></i> Remaining Cover:</strong>
+                Annual plan limit minus cumulative paid settlements during the current policy year.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Policies Grid -->
+<div class="row g-4">
+    {% for item in policy_data %}
+    {% set p = item.policy %}
+    {% set s = item.summary %}
+    <div class="col-lg-6">
+        <div class="card card-custom h-100">
+            <div class="card-header card-header-clean">
+                <div>
+                    <span class="fw-bold text-navy fs-5">Policy #{{ p.policy_id }}</span>
+                    <span class="badge {{ 'bg-success-subtle text-success border border-success-subtle' if p.status == 'active' else 'bg-danger-subtle text-danger border border-danger-subtle' }} ms-2 text-uppercase">
+                        {{ p.status }}
+                    </span>
+                </div>
+                <span class="badge bg-light text-dark border">
+                    Plan: {{ p.plan.plan_name }}
+                </span>
+            </div>
+            <div class="card-body">
+                
+                <!-- Financial Cover Bar -->
+                <div class="mb-3 p-3 bg-light rounded border">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small fw-semibold text-muted">Annual Coverage Utilization</span>
+                        <span class="small fw-bold tabular-nums">
+                            {{ s.total_paid | currency }} / {{ s.annual_limit | currency }}
+                        </span>
+                    </div>
+                    {% set pct_used = (s.total_paid / s.annual_limit * 100) if s.annual_limit > 0 else 0 %}
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar {{ 'bg-danger' if pct_used > 80 else 'bg-primary' }}" 
+                             role="progressbar" 
+                             style="width: {{ pct_used if pct_used <= 100 else 100 }}%;" 
+                             aria-valuenow="{{ pct_used }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2 small">
+                        <span class="text-muted">Remaining Balance:</span>
+                        <strong class="text-success tabular-nums fs-6">{{ s.remaining_cover | currency }}</strong>
+                    </div>
+                </div>
+
+                <!-- Terms Breakdown -->
+                <div class="row g-2 mb-3 small">
+                    <div class="col-6">
+                        <div class="p-2 border rounded bg-white">
+                            <span class="text-muted d-block" style="font-size: 0.75rem;">Coverage Period</span>
+                            <strong>{{ p.start_date | date_format }} – {{ p.end_date | date_format }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 border rounded bg-white">
+                            <span class="text-muted d-block" style="font-size: 0.75rem;">Treatment Types</span>
+                            <strong class="text-capitalize">{{ p.plan.covered_treatment_types.replace('|', ' & ') }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 border rounded bg-white">
+                            <span class="text-muted d-block" style="font-size: 0.75rem;">Deductible per Claim</span>
+                            <strong class="tabular-nums">{{ p.plan.deductible_inr | currency }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 border rounded bg-white">
+                            <span class="text-muted d-block" style="font-size: 0.75rem;">Co-Pay Percentage</span>
+                            <strong class="tabular-nums">{{ p.plan.copay_percent }}%</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Covered Members List -->
+                <h6 class="fw-bold text-navy mb-2" style="font-size: 0.85rem;">
+                    <i class="bi bi-people-fill text-primary me-1"></i> Covered Beneficiaries ({{ item.members | length }})
+                </h6>
+                <div class="list-group list-group-flush border rounded bg-white">
+                    {% for m in item.members %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                        <div>
+                            <span class="fw-semibold">{{ m.display_name }}</span>
+                            <span class="text-muted small ms-1">(Member ID: #{{ m.member_id }})</span>
+                        </div>
+                        <span class="badge bg-light text-muted border text-capitalize">{{ m.relationship }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+            <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center">
+                <span class="text-muted small">
+                    Policyholder: <strong>{{ p.holder_user.display_name }}</strong>
+                </span>
+                <a href="{{ url_for('claims', search_q=p.policy_id) }}" class="btn btn-sm btn-outline-navy">
+                    View Claims <i class="bi bi-chevron-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5">
+        <i class="bi bi-card-checklist fs-1 text-muted d-block mb-2"></i>
+        <p class="text-muted">No policies registered.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

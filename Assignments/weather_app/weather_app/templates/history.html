@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}History - WeatherApp{% endblock %}
+
+{% block content %}
+<section class="page">
+    <h1 class="page-title">Search History</h1>
+
+    {% if history %}
+    <div class="history-list">
+        {% for h in history %}
+        <div class="history-row">
+            <div class="history-icon"><i class="bi bi-clock-history"></i></div>
+            <div class="history-info">
+                <h3>{{ h.city }}</h3>
+                <p>{{ h.country }}</p>
+            </div>
+            <div class="history-time">{{ h.searched_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+            <a class="btn-light" href="{{ url_for('search', city=h.city ~ ',' ~ h.country) }}">Search Again</a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">No searches yet. Try searching for a city!</div>
+    {% endif %}
+</section>
+{% endblock %}

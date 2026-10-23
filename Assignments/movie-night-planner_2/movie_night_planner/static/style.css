@@ -1,0 +1,206 @@
+/* ==========================================================================
+   Movie Night Planner - Custom Stylesheet
+   Designed to complement Bootstrap 5.3.8 dark mode
+   ========================================================================== */
+
+:root {
+  --cinema-gold: #f59e0b;
+  --cinema-gold-hover: #d97706;
+  --cinema-dark-bg: #090d16;
+  --cinema-card-bg: #111827;
+  --cinema-card-border: #1f2937;
+  --cinema-accent-glow: rgba(245, 158, 11, 0.18);
+}
+
+body {
+  background-color: var(--cinema-dark-bg);
+  color: #e2e8f0;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navbar */
+.navbar-cinema {
+  background-color: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #1f2937;
+}
+
+.brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #fff;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+}
+
+/* Hero Section */
+.hero-cinema {
+  background: radial-gradient(circle at 50% 20%, rgba(245, 158, 11, 0.12), transparent 70%),
+              linear-gradient(180deg, #111827 0%, var(--cinema-dark-bg) 100%);
+  border-bottom: 1px solid #1f2937;
+  padding: 3rem 0;
+}
+
+/* Card Styling */
+.card-cinema {
+  background-color: var(--cinema-card-bg);
+  border: 1px solid var(--cinema-card-border);
+  border-radius: 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-cinema:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.6);
+  border-color: #374151;
+}
+
+/* Movie Poster Container */
+.movie-poster-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 150%; /* 2:3 aspect ratio */
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
+  background-color: #0f172a;
+}
+
+.movie-poster-wrapper img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.card-cinema:hover .movie-poster-wrapper img {
+  transform: scale(1.03);
+}
+
+/* Winning Movie Celebration Card */
+.winning-card {
+  background: linear-gradient(145deg, #182234, #121927);
+  border: 2px solid #f59e0b !important;
+  box-shadow: 0 0 25px var(--cinema-accent-glow);
+  position: relative;
+  overflow: hidden;
+}
+
+.winning-ribbon {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  color: #0f172a;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  padding: 0.4rem 1.25rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Responsive Video Embed Container */
+.video-responsive {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 ratio */
+  height: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: #000;
+  border: 1px solid #1f2937;
+}
+
+.video-responsive iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Vote Bar */
+.vote-progress {
+  height: 8px;
+  background-color: #1f2937;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.vote-progress-bar {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+/* Badges */
+.badge-category {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  font-weight: 500;
+}
+
+.badge-open {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-finalized {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Custom Gold Button */
+.btn-cinema {
+  background-color: var(--cinema-gold);
+  color: #0f172a;
+  font-weight: 600;
+  border: none;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-cinema:hover {
+  background-color: var(--cinema-gold-hover);
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.btn-cinema:active {
+  transform: translateY(0);
+}
+
+/* Custom Outline */
+.btn-outline-cinema {
+  color: #f59e0b;
+  border: 1px solid #f59e0b;
+  background-color: transparent;
+  font-weight: 500;
+}
+
+.btn-outline-cinema:hover {
+  background-color: #f59e0b;
+  color: #0f172a;
+}
+
+/* Footer */
+footer {
+  margin-top: auto;
+  border-top: 1px solid #1f2937;
+  background-color: #0b0f19;
+  padding: 1.5rem 0;
+}

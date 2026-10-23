@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Login - WeatherApp{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block layout %}
+<div class="auth">
+
+    <!-- LEFT: scenic background + features -->
+    <div class="auth-left">
+        <div class="auth-brand">
+            <i class="bi bi-cloud-sun-fill"></i>
+            <h1>Weather<b>App</b></h1>
+            <p>Get real-time weather updates for your favorite places.</p>
+        </div>
+        <ul class="auth-features">
+            <li><i class="bi bi-brightness-alt-high"></i> Accurate Forecasts</li>
+            <li><i class="bi bi-geo-alt-fill"></i> Save Your Cities</li>
+            <li><i class="bi bi-clock-history"></i> Track Weather History</li>
+        </ul>
+    </div>
+
+    <!-- RIGHT: login card -->
+    <div class="auth-right">
+        <div class="auth-card">
+            <div class="auth-tabs">
+                <a class="active" href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Sign Up</a>
+            </div>
+
+            <i class="bi bi-cloud-sun-fill auth-card-icon"></i>
+            <h2>Welcome Back!</h2>
+            <p class="auth-sub">Login to your account</p>
+
+            <form method="post">
+                <div class="input-group">
+                    <i class="bi bi-envelope"></i>
+                    <input type="email" name="email" placeholder="Email" maxlength="150" required>
+                </div>
+                <div class="input-group">
+                    <i class="bi bi-lock"></i>
+                    <input type="password" name="password" placeholder="Password" required>
+                    <button type="button" class="toggle-pass"><i class="bi bi-eye"></i></button>
+                </div>
+                <button type="submit" class="btn-primary block">Login</button>
+            </form>
+
+            <div class="or"><span>OR</span></div>
+            <button type="button" class="btn-google"><i class="bi bi-google"></i> Login with Google</button>
+
+            <p class="auth-switch">Don't have an account? <a href="{{ url_for('register') }}">Sign Up</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

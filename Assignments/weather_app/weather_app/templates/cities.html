@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}My Cities - WeatherApp{% endblock %}
+
+{% block content %}
+<section class="page">
+    <div class="page-head">
+        <h1 class="page-title">My Cities</h1>
+
+        <!-- Add City -->
+        <form class="add-city" action="{{ url_for('cities_add') }}" method="post">
+            <input type="text" name="city" placeholder="City name" maxlength="100" required>
+            <button type="submit" class="btn-primary"><i class="bi bi-plus-lg"></i> Add City</button>
+        </form>
+    </div>
+
+    {% if cities %}
+    <div class="city-list">
+        {% for c in cities %}
+        <!-- script.js reads data-city and fills in the temperature -->
+        <div class="city-card" data-city="{{ c.city }},{{ c.country }}">
+            <div class="city-thumb">{{ c.city[0] }}</div>
+
+            <div class="city-info">
+                <h3>{{ c.city }}</h3>
+                <p class="city-sub">{{ c.country }}</p>
+            </div>
+
+            <div class="city-weather">
+                <i class="city-icon bi" hidden></i>
+                <span class="city-temp">--</span>
+            </div>
+
+            <a class="btn-light" href="{{ url_for('search', city=c.city ~ ',' ~ c.country) }}">View Weather</a>
+
+            <!-- Three-dot menu -->
+            <div class="menu">
+                <button type="button" class="menu-btn"><i class="bi bi-three-dots-vertical"></i></button>
+                <div class="menu-list">
+                    <form method="post" action="{{ url_for('cities_remove', city_id=c.id) }}">
+                        <button type="submit" class="danger"><i class="bi bi-trash"></i> Remove</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">You have no saved cities yet. Add one above!</div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Create an Account{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-5">
+            <div class="card card-cinema p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="brand-icon mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+                    <h1 class="h3 text-white fw-bold">Join Movie Night</h1>
+                    <p class="text-secondary small">Register to create movie night plans, suggest films, and vote.</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('register') }}" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <!-- Display Name -->
+                    <div class="mb-3">
+                        <label for="name" class="form-label text-secondary small fw-bold">Full Name *</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" id="name" name="name" value="{{ form_data.name if form_data else '' }}" required placeholder="e.g. Alex Rivera" maxlength="100">
+                    </div>
+
+                    <!-- Username -->
+                    <div class="mb-3">
+                        <label for="username" class="form-label text-secondary small fw-bold">Username *</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" id="username" name="username" value="{{ form_data.username if form_data else '' }}" required placeholder="e.g. alex24" maxlength="50" autocomplete="username">
+                        <div class="form-text text-secondary small">Letters, numbers, and underscores only.</div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-3">
+                        <label for="password" class="form-label text-secondary small fw-bold">Password *</label>
+                        <input type="password" class="form-control bg-dark text-light border-secondary" id="password" name="password" required placeholder="Minimum 6 characters" minlength="6" autocomplete="new-password">
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="mb-4">
+                        <label for="confirm_password" class="form-label text-secondary small fw-bold">Confirm Password *</label>
+                        <input type="password" class="form-control bg-dark text-light border-secondary" id="confirm_password" name="confirm_password" required placeholder="Re-enter your password" autocomplete="new-password">
+                    </div>
+
+                    <button type="submit" class="btn btn-cinema w-100 py-2.5 rounded-pill fw-bold shadow-sm mb-3">
+                        <i class="bi bi-person-check-fill me-1"></i> Register Account
+                    </button>
+                </form>
+
+                <div class="text-center pt-3 border-top border-secondary text-secondary small">
+                    Already have an account? <a href="{{ url_for('login') }}" class="text-warning text-decoration-none fw-semibold">Log in here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

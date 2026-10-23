@@ -1,0 +1,29 @@
+<div class="weather-grid {% if not show_highlights %}single{% endif %}">
+  <div class="card glass weather-card">
+    <div class="wc-top">
+      <div class="wc-place"><i class="bi bi-geo-alt-fill"></i><div><h2>{{ weather.city }}</h2><p>{% if weather.state %}{{ weather.state }}, {% endif %}{{ weather.country }}</p></div></div>
+      <div class="wc-date">{{ weather.date }}<br>{{ weather.time }}
+        <form method="post" action="{{ url_for('cities_add') }}"><input type="hidden" name="city" value="{{ weather.city }},{{ weather.country_code }}"><button type="submit" class="save-btn"><i class="bi bi-plus-lg"></i> Save City</button></form>
+      </div>
+    </div>
+    <div class="wc-main"><i class="wc-icon bi {{ weather.icon }}"></i><div><div class="wc-temp">{{ weather.temp }}<span>°C</span></div><div class="wc-cond">{{ weather.condition }}</div></div></div>
+    <div class="metrics">
+      <div class="metric"><i class="bi bi-thermometer-half"></i><div><small>Feels Like</small><strong>{{ weather.feels_like }}°C</strong></div></div>
+      <div class="metric"><i class="bi bi-droplet"></i><div><small>Humidity</small><strong>{{ weather.humidity }}%</strong></div></div>
+      <div class="metric"><i class="bi bi-wind"></i><div><small>Wind</small><strong>{{ weather.wind }} km/h</strong></div></div>
+      <div class="metric"><i class="bi bi-speedometer2"></i><div><small>Pressure</small><strong>{{ weather.pressure }} hPa</strong></div></div>
+    </div>
+    <div class="metrics extra-metrics">
+      <div class="metric"><i class="bi bi-droplet-half"></i><div><small>Dew Point</small><strong>{{ weather.Dewpoint }}°C</strong></div></div>
+    </div>
+  </div>
+  {% if show_highlights %}<div class="card glass highlights"><h3>Today's Highlights</h3><ul>
+    <li><span class="hl-icon sunrise"><i class="bi bi-sunrise-fill"></i></span><span class="hl-label">Sunrise</span><span class="hl-value">{{ weather.sunrise }}</span></li>
+    <li><span class="hl-icon sunset"><i class="bi bi-sunset-fill"></i></span><span class="hl-label">Sunset</span><span class="hl-value">{{ weather.sunset }}</span></li>
+    <li><span class="hl-icon uv"><i class="bi bi-brightness-high-fill"></i></span><span class="hl-label">UV Index</span><span class="hl-value">{{ weather.uv }}</span></li>
+    <li><span class="hl-icon vis"><i class="bi bi-eye-fill"></i></span><span class="hl-label">Visibility</span><span class="hl-value">{{ weather.visibility }}</span></li>
+  </ul></div>{% endif %}
+</div>
+<div class="forecast-box">{% if not show_highlights %}<h3>Next 5 Days</h3>{% endif %}<div class="forecast">
+{% for day in weather.forecast %}<div class="fc-card {% if loop.first %}active{% endif %}"><strong class="fc-day">{{ day.day }}</strong><span class="fc-date">{{ day.date }}</span><i class="fc-icon bi {{ day.icon }}"></i><div class="fc-temp">{{ day.max }}° <span>/ {{ day.min }}°</span></div><div class="fc-cond">{{ day.condition }}</div></div>{% endfor %}
+</div></div>

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Access Denied - 403 Forbidden{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-6 text-center">
+        <div class="card card-custom p-5">
+            <div class="mb-3">
+                <i class="bi bi-shield-x text-danger display-1"></i>
+            </div>
+            <h2 class="fw-bold text-navy mb-2">403 — Access Restricted</h2>
+            <p class="text-muted mb-4">
+                You do not have permission to view or modify this record. Policyholders are restricted to their own policies and claims, and hospital desks may only access claims for their facility.
+            </p>
+            <div>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-navy px-4 me-2">
+                    <i class="bi bi-house-door me-1"></i> Return to Dashboard
+                </a>
+                <a href="{{ url_for('claims') }}" class="btn btn-outline-secondary px-4">
+                    View My Claims
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

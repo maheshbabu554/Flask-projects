@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+
+{% block content %}
+<div class="light-page">
+  <h1 class="page-title">Search Weather</h1>
+
+  {% include "_search_box.html" %}
+
+  <div id="result" class="result-area">
+    <div class="empty-state">
+      <p>Type a city name above and pick it from the list.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+{% endblock %}

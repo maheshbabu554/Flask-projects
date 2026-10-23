@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+
+{% block content %}
+<div class="light-page">
+  <div class="title-row">
+    <h1 class="page-title">History</h1>
+    <button class="btn-danger" id="clear-history-btn">Clear History</button>
+  </div>
+  <div id="history-list" class="city-list"><p class="loading dark">Loading history...</p></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+{% endblock %}

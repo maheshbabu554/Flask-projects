@@ -1,0 +1,35 @@
+
+{% extends "base.html" %}
+{% block title %}Rate Movie{% endblock %}
+{% block content %}
+<div class="form-card mx-auto">
+    <h2>Rate {{ movie.title }}</h2>
+
+    {% if movie.poster_url %}
+        <img src="{{ movie.poster_url }}" class="rating-poster mb-3"
+             alt="{{ movie.title }} poster"
+             onerror="this.style.display='none'">
+    {% endif %}
+
+    <form method="POST">
+        <div class="mb-3">
+            <label class="form-label">Rating</label>
+            <select name="rating" class="form-select" required>
+                {% for score in range(1, 6) %}
+                    <option value="{{ score }}"
+                        {% if existing_review and existing_review.rating == score %}selected{% endif %}>
+                        {{ score }} / 5 {% if score == 5 %}★★★★★{% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Your review</label>
+            <textarea class="form-control" name="review" rows="4"
+                      placeholder="What did you think of this movie?">{{ existing_review.review if existing_review else '' }}</textarea>
+        </div>
+        <button class="btn btn-dark w-100">Save Review</button>
+    </form>
+    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary w-100 mt-2">Back to Movies</a>
+</div>
+{% endblock %}

@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block title %}System Administration{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-3">
+    <div class="col-md-8">
+        <h2 class="page-title">
+            <i class="bi bi-shield-lock-fill text-primary me-2"></i>Administrator Management Console
+        </h2>
+        <div class="page-description">
+            Oversee healthcare providers, plans, user roles, settlement queue, and payment ledger.
+        </div>
+    </div>
+    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6">
+            <i class="bi bi-person-check-fill me-1"></i> Admin: {{ user.display_name }}
+        </span>
+    </div>
+</div>
+
+<!-- Navigation Tabs -->
+<ul class="nav nav-pills mb-4 gap-2 bg-white p-2 rounded border" id="adminTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="settlements-tab" data-bs-toggle="pill" data-bs-target="#settlements" type="button" role="tab">
+            <i class="bi bi-cash-coin me-1"></i> Settlement Queue ({{ approved_queue | length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="ledger-tab" data-bs-toggle="pill" data-bs-target="#ledger" type="button" role="tab">
+            <i class="bi bi-journal-check me-1"></i> Settlements Ledger ({{ settlements | length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="hospitals-tab" data-bs-toggle="pill" data-bs-target="#hospitals" type="button" role="tab">
+            <i class="bi bi-hospital me-1"></i> Healthcare Facilities ({{ hospitals | length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="plans-tab" data-bs-toggle="pill" data-bs-target="#plans" type="button" role="tab">
+            <i class="bi bi-card-checklist me-1"></i> Insurance Plans ({{ plans | length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="users-tab" data-bs-toggle="pill" data-bs-target="#users" type="button" role="tab">
+            <i class="bi bi-people me-1"></i> System Users & Roles ({{ users | length }})
+        </button>
+    </li>
+</ul>
+
+<!-- Tabs Content -->
+<div class="tab-content" id="adminTabsContent">
+    
+    <!-- 1. Approved Claims Awaiting Simulated Payment -->
+    <div class="tab-pane fade show active" id="settlements" role="tabpanel">
+        <div class="card card-custom">
+            <div class="card-header card-header-clean">
+                <span class="fw-bold">
+                    <i class="bi bi-cash-stack text-success me-2"></i>Approved Claims Awaiting Simulated Payout
+                </span>
+                <span class="badge bg-light text-muted border">Simulation Disbursement</span>
+            </div>
+            <div class="card-body p-0">
+                {% if approved_queue %}
+                <div class="table-responsive">
+                    <table class="table table-custom table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Claim ID</th>
+                                <th>Member & Policy</th>
+                                <th>Hospital</th>
+                                <th>Claim Type</th>
+                                <th class="text-end">Approved Eligible</th>
+                                <th>Payee Beneficiary</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in approved_queue %}
+                            <tr>
+                                <td class="fw-bold text-navy">#{{ c.claim_id }}</td>
+                                <td>
+                                    <div class="fw-semibold">{{ c.member.display_name }}</div>
+                                    <span class="text-muted small">Policy #{{ c.policy_id }}</span>
+                                </td>
+                                <td>{{ c.hospital.name }}</td>
+                                <td>
+                                    <span class="badge bg-light text-dark border text-capitalize">{{ c.claim_type }}</span>
+                                </td>
+                                <td class="text-end fw-bold tabular-nums text-success">
+                                    {{ c.eligible_amount_inr | currency }}
+                                </td>
+                                <td>
+                                    {% if c.claim_type == 'cashless' %}
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border">
+                                        Hospital ({{ c.hospital.name }})
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-primary-subtle text-primary border">
+                                        Policyholder ({{ c.policy.holder_user.display_name }})
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <form method="POST" action="{{ url_for('claim_settle', claim_id=c.claim_id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-teal text-nowrap">
+                                            <i class="bi bi-check2-circle me-1"></i> Disburse Settlement
+                                        </button>
+                                    </form>
+                                    <a href="{{ url_for('claim_detail', claim_id=c.claim_id) }}" class="btn btn-sm btn-outline-navy ms-1">
+                                        Audit
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-wallet2 fs-1 text-muted d-block mb-2"></i>
+                    <h6 class="fw-bold text-navy">No approved claims awaiting settlement.</h6>
+                    <p class="text-muted small">When claims officers approve claims, they appear here for simulated payout execution.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Recorded Settlements Ledger -->
+    <div class="tab-pane fade" id="ledger" role="tabpanel">
+        <div class="card card-custom">
+            <div class="card-header card-header-clean">
+                <span class="fw-bold">
+                    <i class="bi bi-journal-text text-primary me-2"></i>Executed Settlements Audit Ledger
+                </span>
+                <span class="text-muted small">Pre-existing & new simulated payment events</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-custom table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Settlement ID</th>
+                                <th>Claim ID</th>
+                                <th>Payee Type</th>
+                                <th>Recipient</th>
+                                <th class="text-end">Disbursed Amount</th>
+                                <th>Recorded By Admin</th>
+                                <th>Settlement Date</th>
+                                <th class="text-end">Claim View</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in settlements %}
+                            <tr>
+                                <td class="fw-bold text-navy">#{{ s.id }}</td>
+                                <td>
+                                    <a href="{{ url_for('claim_detail', claim_id=s.claim_id) }}" class="fw-semibold text-decoration-none">
+                                        Claim #{{ s.claim_id }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border text-capitalize">{{ s.payee_type }}</span>
+                                </td>
+                                <td>
+                                    {% if s.payee_type == 'hospital' %}
+                                    {{ s.claim.hospital.name }}
+                                    {% else %}
+                                    {{ s.claim.policy.holder_user.display_name }}
+                                    {% endif %}
+                                </td>
+                                <td class="text-end fw-bold tabular-nums text-success">
+                                    {{ s.amount_inr | currency }}
+                                </td>
+                                <td class="small">{{ s.recorder.display_name }}</td>
+                                <td class="small">{{ s.recorded_date | date_format }}</td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('claim_detail', claim_id=s.claim_id) }}" class="btn btn-sm btn-outline-navy">
+                                        Inspect
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Hospitals Registry -->
+    <div class="tab-pane fade" id="hospitals" role="tabpanel">
+        <div class="card card-custom">
+            <div class="card-header card-header-clean">
+                <span class="fw-bold">
+                    <i class="bi bi-hospital text-primary me-2"></i>Empanelled & Non-Network Healthcare Facilities
+                </span>
+                <span class="text-muted small">Fictional hospital network</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-custom table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Hospital ID</th>
+                                <th>Hospital Name</th>
+                                <th>City Location</th>
+                                <th>Network Empanelled Status</th>
+                                <th>Cashless Eligibility</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for h in hospitals %}
+                            <tr>
+                                <td class="fw-bold text-navy">#{{ h.hospital_id }}</td>
+                                <td class="fw-semibold">{{ h.name }}</td>
+                                <td>{{ h.city }}</td>
+                                <td>
+                                    {% if h.is_network() %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                        <i class="bi bi-check-circle-fill me-1"></i> Network Empanelled
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary border">
+                                        Non-Network Facility
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="small">
+                                    {{ 'Eligible for Direct Cashless Filing' if h.is_network() else 'Reimbursement Filing Only' }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Plans Master -->
+    <div class="tab-pane fade" id="plans" role="tabpanel">
+        <div class="card card-custom">
+            <div class="card-header card-header-clean">
+                <span class="fw-bold">
+                    <i class="bi bi-card-checklist text-primary me-2"></i>Health Plan Terms, Deductibles & Co-Pays
+                </span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-custom table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Plan ID</th>
+                                <th>Plan Name</th>
+                                <th>Covered Treatments</th>
+                                <th class="text-end">Annual Coverage Limit</th>
+                                <th class="text-end">Deductible</th>
+                                <th class="text-end">Co-Pay %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in plans %}
+                            <tr>
+                                <td class="fw-bold text-navy">#{{ p.plan_id }}</td>
+                                <td class="fw-semibold">{{ p.plan_name }}</td>
+                                <td>
+                                    <span class="badge bg-light text-dark border text-capitalize">
+                                        {{ p.covered_treatment_types.replace('|', ' & ') }}
+                                    </span>
+                                </td>
+                                <td class="text-end fw-bold tabular-nums">{{ p.annual_limit_inr | currency }}</td>
+                                <td class="text-end tabular-nums">{{ p.deductible_inr | currency }}</td>
+                                <td class="text-end tabular-nums">{{ p.copay_percent }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Users & Roles -->
+    <div class="tab-pane fade" id="users" role="tabpanel">
+        <div class="card card-custom">
+            <div class="card-header card-header-clean">
+                <span class="fw-bold">
+                    <i class="bi bi-people text-primary me-2"></i>System User Directory & Role Assignment
+                </span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-custom table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Username</th>
+                                <th>Display Name</th>
+                                <th>Assigned Role</th>
+                                <th>Linked Hospital</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in users %}
+                            <tr>
+                                <td class="fw-bold text-navy">#{{ u.user_id }}</td>
+                                <td><code>{{ u.username }}</code></td>
+                                <td class="fw-semibold">{{ u.display_name }}</td>
+                                <td>
+                                    <span class="role-badge role-{{ u.role }}">
+                                        {{ u.role.replace('_', ' ') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {{ u.hospital.name if u.hospital else '—' }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Log In - Claims Simulator{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-xl-9 col-lg-10">
+
+        <!-- Header Card -->
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center bg-white p-3 rounded-circle shadow-sm mb-3">
+                <i class="bi bi-shield-check text-primary fs-1"></i>
+            </div>
+            <h2 class="fw-bold text-navy" style="color: #102C46;">Health Insurance Claims Simulator</h2>
+            <p class="text-muted">
+                Explore end-to-end healthcare claim adjudication, policy limits, document verification, and simulated settlements.
+            </p>
+        </div>
+
+        <!-- 4 Role Demo Login Cards -->
+        <div class="card card-custom mb-4">
+            <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0 fw-bold" style="color: #102C46;">
+                        <i class="bi bi-person-bounding-box text-primary me-2"></i>Quick Role-Based Demo Login
+                    </h5>
+                    <div class="text-muted small">Select any role to immediately test authorized data views and workflow actions.</div>
+                </div>
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                    <i class="bi bi-lightning-charge-fill me-1"></i>Demo Mode Active
+                </span>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    
+                    <!-- 1. Policyholder -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="border rounded p-3 h-100 d-flex flex-column bg-white shadow-sm hover-shadow">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="bg-primary-subtle text-primary p-2 rounded">
+                                    <i class="bi bi-person-fill fs-5"></i>
+                                </span>
+                                <div>
+                                    <h6 class="fw-bold mb-0" style="color: #102C46;">Policyholder</h6>
+                                    <span class="text-muted" style="font-size: 0.75rem;">Patient / Insured</span>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-3 flex-grow-1">
+                                View policies, manage covered dependents, create reimbursement claims, and respond to inquiries.
+                            </p>
+                            <div class="dropdown mt-auto">
+                                <button class="btn btn-navy btn-sm w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    Log In as Holder
+                                </button>
+                                <ul class="dropdown-menu shadow">
+                                    {% for u in role_accounts.policyholders %}
+                                    <li>
+                                        <a class="dropdown-item py-2" href="{{ url_for('switch_user', user_id=u.user_id) }}">
+                                            <strong>{{ u.display_name }}</strong>
+                                            <div class="text-muted" style="font-size: 0.72rem;">User ID: {{ u.user_id }} · @{{ u.username }}</div>
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Hospital Desk -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="border rounded p-3 h-100 d-flex flex-column bg-white shadow-sm hover-shadow">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="bg-warning-subtle text-warning-emphasis p-2 rounded">
+                                    <i class="bi bi-hospital-fill fs-5"></i>
+                                </span>
+                                <div>
+                                    <h6 class="fw-bold mb-0" style="color: #102C46;">Hospital Desk</h6>
+                                    <span class="text-muted" style="font-size: 0.75rem;">Network Provider</span>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-3 flex-grow-1">
+                                File cashless claims for admitted patients, view hospital claim status, and provide discharge records.
+                            </p>
+                            <div class="dropdown mt-auto">
+                                <button class="btn btn-navy btn-sm w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    Log In as Hospital
+                                </button>
+                                <ul class="dropdown-menu shadow">
+                                    {% for u in role_accounts.hospitals %}
+                                    <li>
+                                        <a class="dropdown-item py-2" href="{{ url_for('switch_user', user_id=u.user_id) }}">
+                                            <strong>{{ u.display_name }}</strong>
+                                            <div class="text-muted" style="font-size: 0.72rem;">{{ u.hospital.name if u.hospital else 'Assigned Hospital' }}</div>
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Claims Officer -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="border rounded p-3 h-100 d-flex flex-column bg-white shadow-sm hover-shadow">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="bg-purple-subtle text-purple p-2 rounded" style="background-color: #F3E8FF; color: #6B21A8;">
+                                    <i class="bi bi-file-earmark-check-fill fs-5"></i>
+                                </span>
+                                <div>
+                                    <h6 class="fw-bold mb-0" style="color: #102C46;">Claims Officer</h6>
+                                    <span class="text-muted" style="font-size: 0.75rem;">Adjudicator</span>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-3 flex-grow-1">
+                                Inspect review queue, verify coverage, detect duplicates, request missing docs, and approve/reject claims.
+                            </p>
+                            <div class="dropdown mt-auto">
+                                <button class="btn btn-navy btn-sm w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    Log In as Officer
+                                </button>
+                                <ul class="dropdown-menu shadow">
+                                    {% for u in role_accounts.officers %}
+                                    <li>
+                                        <a class="dropdown-item py-2" href="{{ url_for('switch_user', user_id=u.user_id) }}">
+                                            <strong>{{ u.display_name }}</strong>
+                                            <div class="text-muted" style="font-size: 0.72rem;">User ID: {{ u.user_id }} · @{{ u.username }}</div>
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Administrator -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="border rounded p-3 h-100 d-flex flex-column bg-white shadow-sm hover-shadow">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="bg-success-subtle text-success p-2 rounded">
+                                    <i class="bi bi-shield-lock-fill fs-5"></i>
+                                </span>
+                                <div>
+                                    <h6 class="fw-bold mb-0" style="color: #102C46;">Administrator</h6>
+                                    <span class="text-muted" style="font-size: 0.75rem;">System Manager</span>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-3 flex-grow-1">
+                                Oversee master registers, record simulated settlements for approved claims, and audit reporting metrics.
+                            </p>
+                            <div class="dropdown mt-auto">
+                                <button class="btn btn-navy btn-sm w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    Log In as Admin
+                                </button>
+                                <ul class="dropdown-menu shadow">
+                                    {% for u in role_accounts.admins %}
+                                    <li>
+                                        <a class="dropdown-item py-2" href="{{ url_for('switch_user', user_id=u.user_id) }}">
+                                            <strong>{{ u.display_name }}</strong>
+                                            <div class="text-muted" style="font-size: 0.72rem;">User ID: {{ u.user_id }} · @{{ u.username }}</div>
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Standard Username Login Accordion / Alternative -->
+        <div class="card card-custom">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3" style="color: #102C46;">
+                    <i class="bi bi-key me-2"></i>Sign In by Username
+                </h6>
+                <form method="POST" action="{{ url_for('login') }}" class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label for="usernameInput" class="form-label small fw-semibold text-muted">Username</label>
+                        <input type="text" class="form-control" id="usernameInput" name="username" placeholder="e.g. aasha, officer_meera, admin_demo" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="passwordInput" class="form-label small fw-semibold text-muted">Password (Demo optional)</label>
+                        <input type="password" class="form-control" id="passwordInput" name="password" placeholder="••••••••">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-teal w-100">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Log In
+                        </button>
+                    </div>
+                </form>
+                <div class="form-text mt-2 small text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    In classroom demo mode, usernames from the synthetic dataset (such as <code>aasha</code>, <code>city_hospital</code>, <code>officer_meera</code>, or <code>admin_demo</code>) log in directly.
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

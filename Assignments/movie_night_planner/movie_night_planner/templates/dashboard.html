@@ -1,0 +1,43 @@
+
+{% extends "base.html" %}
+{% block title %}My Plans{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>My Movie Nights</h2>
+    <a class="btn btn-warning" href="{{ url_for('create_night') }}">+ New Plan</a>
+</div>
+
+{% macro night_list(items, heading, status_color) %}
+<h4 class="mt-4 mb-3">{{ heading }}</h4>
+<div class="row g-3">
+    {% for night in items %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+            {% if night.poster_url %}
+                <img src="{{ night.poster_url }}" class="dashboard-poster"
+                     alt="{{ night.title }} poster"
+                     onerror="this.style.display='none'">
+            {% endif %}
+            <div class="card-body">
+                <h5>{{ night.title }}</h5>
+                <p class="mb-1">📅 {{ night.night_date }}</p>
+                <p class="mb-1">🕒 {{ night.start_time }}</p>
+                <p class="mb-2">📍 {{ night.location }}</p>
+                <span class="badge text-bg-{{ status_color }}">{{ night.status }}</span>
+                <a class="btn btn-dark btn-sm w-100 mt-3"
+                   href="{{ url_for('view_night', night_id=night.id) }}">View Plan</a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+        <div class="col-12"><p class="text-secondary">No plans in this section.</p></div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{{ night_list(upcoming, "Upcoming Movie Nights", "primary") }}
+{{ night_list(completed, "Completed Movie Nights", "success") }}
+{{ night_list(cancelled, "Cancelled Movie Nights", "danger") }}
+
+{% endblock %}

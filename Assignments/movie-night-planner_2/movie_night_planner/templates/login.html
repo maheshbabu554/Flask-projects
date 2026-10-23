@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Log In{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-5">
+            <div class="card card-cinema p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="brand-icon mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                    </div>
+                    <h1 class="h3 text-white fw-bold">Welcome Back</h1>
+                    <p class="text-secondary small">Log in to manage your movie nights and cast your votes.</p>
+                </div>
+
+                <!-- Beginner / College Demo Helper Card -->
+                <div class="p-3 mb-4 rounded bg-dark border border-secondary text-secondary small">
+                    <strong class="text-warning d-block mb-1"><i class="bi bi-info-circle me-1"></i> Quick Demo Accounts:</strong>
+                    <div>Username: <code class="text-light">alex</code> | Password: <code class="text-light">password123</code> <span class="badge bg-secondary">Organizer</span></div>
+                    <div>Username: <code class="text-light">jordan</code> | Password: <code class="text-light">password123</code> <span class="badge bg-secondary">Voter</span></div>
+                </div>
+
+                <form method="POST" action="{{ url_for('login') }}" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <!-- Username -->
+                    <div class="mb-3">
+                        <label for="username" class="form-label text-secondary small fw-bold">Username</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" id="username" name="username" value="{{ username if username else '' }}" required placeholder="Enter your username" autocomplete="username">
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-4">
+                        <label for="password" class="form-label text-secondary small fw-bold">Password</label>
+                        <input type="password" class="form-control bg-dark text-light border-secondary" id="password" name="password" required placeholder="Enter your password" autocomplete="current-password">
+                    </div>
+
+                    <button type="submit" class="btn btn-cinema w-100 py-2.5 rounded-pill fw-bold shadow-sm mb-3">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Log In
+                    </button>
+                </form>
+
+                <div class="text-center pt-3 border-top border-secondary text-secondary small">
+                    Don't have an account yet? <a href="{{ url_for('register') }}" class="text-warning text-decoration-none fw-semibold">Sign up here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

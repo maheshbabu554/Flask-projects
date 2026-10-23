@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Sign Up - WeatherApp{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block layout %}
+<div class="auth">
+
+    <div class="auth-left">
+        <div class="auth-brand">
+            <i class="bi bi-cloud-sun-fill"></i>
+            <h1>Weather<b>App</b></h1>
+            <p>Get real-time weather updates for your favorite places.</p>
+        </div>
+        <ul class="auth-features">
+            <li><i class="bi bi-brightness-alt-high"></i> Accurate Forecasts</li>
+            <li><i class="bi bi-geo-alt-fill"></i> Save Your Cities</li>
+            <li><i class="bi bi-clock-history"></i> Track Weather History</li>
+        </ul>
+    </div>
+
+    <div class="auth-right">
+        <div class="auth-card">
+            <div class="auth-tabs">
+                <a href="{{ url_for('login') }}">Login</a>
+                <a class="active" href="{{ url_for('register') }}">Sign Up</a>
+            </div>
+
+            <i class="bi bi-cloud-sun-fill auth-card-icon"></i>
+            <h2>Create Account</h2>
+            <p class="auth-sub">Sign up to get started</p>
+
+            <form method="post" id="registerForm">
+                <div class="input-group">
+                    <i class="bi bi-person"></i>
+                    <input type="text" name="name" placeholder="Name" maxlength="100"
+                           value="{{ request.form.get('name', '') }}" required>
+                </div>
+                <div class="input-group">
+                    <i class="bi bi-envelope"></i>
+                    <input type="email" name="email" placeholder="Email" maxlength="150"
+                           value="{{ request.form.get('email', '') }}" required>
+                </div>
+                <div class="input-group">
+                    <i class="bi bi-lock"></i>
+                    <input type="password" name="password" placeholder="Password (min 6 characters)" minlength="6" required>
+                    <button type="button" class="toggle-pass"><i class="bi bi-eye"></i></button>
+                </div>
+                <div class="input-group">
+                    <i class="bi bi-lock-fill"></i>
+                    <input type="password" name="confirm_password" placeholder="Confirm Password" minlength="6" required>
+                    <button type="button" class="toggle-pass"><i class="bi bi-eye"></i></button>
+                </div>
+                <button type="submit" class="btn-primary block">Create Account</button>
+            </form>
+
+            <p class="auth-switch">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

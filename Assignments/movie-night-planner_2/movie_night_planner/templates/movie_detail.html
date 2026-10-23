@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block title %}{{ night.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-secondary text-decoration-none"><i class="bi bi-arrow-left me-1"></i>All Movie Nights</a></li>
+            <li class="breadcrumb-item active text-warning" aria-current="page">{{ night.title }}</li>
+        </ol>
+    </nav>
+
+    <!-- Movie Night Header Card -->
+    <div class="card card-cinema p-4 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="badge badge-category rounded-pill px-3 py-1.5">{{ night.category }}</span>
+                    {% if night.status == 'finalized' %}
+                        <span class="badge badge-finalized rounded-pill px-3 py-1.5 d-flex align-items-center gap-1">
+                            <i class="bi bi-trophy-fill text-warning"></i> Voting Closed - Final Movie Selected
+                        </span>
+                    {% else %}
+                        <span class="badge badge-open rounded-pill px-3 py-1.5 d-flex align-items-center gap-1">
+                            <i class="bi bi-check-circle-fill text-success"></i> Voting Open
+                        </span>
+                    {% endif %}
+                </div>
+                <h1 class="display-6 fw-bold text-white mb-2">{{ night.title }}</h1>
+                <div class="d-flex flex-wrap align-items-center gap-3 text-secondary small mb-3">
+                    <span class="d-flex align-items-center gap-1">
+                        <i class="bi bi-calendar-event text-warning"></i>
+                        Scheduled for: <strong class="text-light">{{ night.date.strftime('%A, %B %d, %Y') if night.date else 'Date TBA' }}</strong>
+                    </span>
+                    <span class="d-flex align-items-center gap-1">
+                        <i class="bi bi-person-fill text-warning"></i>
+                        Organizer: <strong class="text-light">{{ night.creator_name }}</strong>
+                    </span>
+                    <span class="d-flex align-items-center gap-1">
+                        <i class="bi bi-bar-chart-fill text-warning"></i>
+                        Total Votes: <strong class="text-light">{{ total_votes }}</strong>
+                    </span>
+                </div>
+                <p class="text-light mb-0" style="white-space: pre-line;">{{ night.description }}</p>
+            </div>
+
+            <!-- Creator Action Controls -->
+            {% if is_creator %}
+                <div class="d-flex flex-wrap gap-2 align-self-start mt-2 mt-md-0">
+                    {% if night.status == 'open' %}
+                        <a href="{{ url_for('edit_movie_night', night_id=night.id) }}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                            <i class="bi bi-pencil me-1"></i> Edit Plan
+                        </a>
+                        {% if choices|length >= 2 %}
+                            <button type="button" class="btn btn-cinema btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#finalizeModal">
+                                <i class="bi bi-trophy me-1"></i> Finalize Winner
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#deleteNightModal">
+                        <i class="bi bi-trash me-1"></i> Delete
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Final Selected Movie Showcase (If Finalized) -->
+    {% if night.status == 'finalized' and final_choice %}
+        <div class="card card-cinema winning-card p-4 mb-5">
+            <div class="d-flex flex-column flex-lg-row align-items-center gap-4">
+                <!-- Winning Poster -->
+                <div class="flex-shrink-0" style="width: 220px; max-width: 100%;">
+                    <div class="movie-poster-wrapper rounded shadow-lg">
+                        <img src="{{ final_choice.poster_url }}" alt="{{ final_choice.title }}" class="movie-poster-img" onerror="this.onerror=null; this.src='/static/images/movie-placeholder.svg';">
+                    </div>
+                </div>
+
+                <!-- Winning Details -->
+                <div class="flex-grow-1 text-center text-lg-start">
+                    <div class="winning-ribbon mb-3 shadow-sm">
+                        <i class="bi bi-award-fill"></i> Official Movie Choice
+                    </div>
+                    <h2 class="h2 text-white fw-bold mb-2">{{ final_choice.title }}</h2>
+                    <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-2 mb-3">
+                        <span class="badge bg-secondary px-3 py-1 rounded-pill">{{ final_choice.genre }}</span>
+                        <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold">
+                            <i class="bi bi-hand-thumbs-up-fill me-1"></i> {{ final_choice.vote_count }} Vote{{ 's' if final_choice.vote_count != 1 else '' }}
+                        </span>
+                    </div>
+
+                    <div class="p-3 rounded bg-dark border border-secondary mb-3 text-start">
+                        <span class="text-secondary small fw-bold text-uppercase d-block mb-1">Reason for Suggestion:</span>
+                        <p class="text-light mb-0 small">{{ final_choice.reason }}</p>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-2">
+                        {% if final_choice.trailer_url and final_choice.trailer_embed_url %}
+                            <button type="button" class="btn btn-cinema rounded-pill px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#trailerModal" data-trailer-url="{{ final_choice.trailer_embed_url }}" data-movie-title="{{ final_choice.title }}">
+                                <i class="bi bi-play-circle-fill me-1"></i> Watch Official Trailer
+                            </button>
+                        {% endif %}
+                        <div class="text-secondary small d-flex align-items-center gap-2 px-2 py-1">
+                            <i class="bi bi-lock-fill text-warning"></i> Voting has been concluded by {{ night.creator_name }}.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Movie Choices Section -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+        <div>
+            <h2 class="h4 text-light fw-bold m-0 d-flex align-items-center gap-2">
+                <i class="bi bi-film text-warning"></i>
+                Movie Suggestions
+                <span class="badge bg-secondary text-light fs-6 fw-normal">{{ choices|length }}</span>
+            </h2>
+            <p class="text-secondary small mb-0">
+                {% if night.status == 'open' %}
+                    {% if session.get('user_id') %}
+                        Cast your vote for the movie you want to watch. You can change your vote anytime before finalization.
+                    {% else %}
+                        Log in to cast your vote for one of the suggested movies.
+                    {% endif %}
+                {% else %}
+                    Voting has closed for this event.
+                {% endif %}
+            </p>
+        </div>
+
+        {% if is_creator and night.status == 'open' %}
+            <button type="button" class="btn btn-cinema btn-sm rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#addChoiceCollapse" aria-expanded="false" aria-controls="addChoiceCollapse">
+                <i class="bi bi-plus-lg me-1"></i> Add Movie Choice
+            </button>
+        {% endif %}
+    </div>
+
+    <!-- Creator Add Movie Choice Form Collapse (Only when open and user is creator) -->
+    {% if is_creator and night.status == 'open' %}
+        <div class="collapse mb-4" id="addChoiceCollapse">
+            <div class="card card-cinema p-4 border-warning">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-warning fw-bold m-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-plus-circle-fill"></i> Suggest a Movie Choice
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-toggle="collapse" data-bs-target="#addChoiceCollapse" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{{ url_for('add_movie_choice', night_id=night.id) }}" class="row g-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="col-md-6">
+                        <label for="movieTitle" class="form-label text-secondary small fw-bold">Movie Title *</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" id="movieTitle" name="title" placeholder="e.g. Inception, Spider-Man: Across the Spider-Verse" required maxlength="150">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="movieGenre" class="form-label text-secondary small fw-bold">Genre *</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" id="movieGenre" name="genre" placeholder="e.g. Sci-Fi, Comedy, Action" required maxlength="60">
+                    </div>
+
+                    <div class="col-12">
+                        <label for="movieReason" class="form-label text-secondary small fw-bold">Why should we watch this? *</label>
+                        <textarea class="form-control bg-dark text-light border-secondary" id="movieReason" name="reason" rows="2" placeholder="Brief reason why this fits the movie night theme..." required></textarea>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="posterUrl" class="form-label text-secondary small fw-bold">Movie Poster URL *</label>
+                        <input type="url" class="form-control bg-dark text-light border-secondary" id="posterUrl" name="poster_url" placeholder="https://images.unsplash.com/... or IMDb/TMDb poster link" required maxlength="500">
+                        <div class="form-text text-secondary small">Provide a direct image URL. If broken, a local fallback placeholder will display.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="trailerUrl" class="form-label text-secondary small fw-bold">YouTube Trailer Link (Optional)</label>
+                        <input type="url" class="form-control bg-dark text-light border-secondary" id="trailerUrl" name="trailer_url" placeholder="e.g. https://www.youtube.com/watch?v=YoHD9XEInc0" maxlength="500">
+                        <div class="form-text text-secondary small">Optional link to the official YouTube trailer.</div>
+                    </div>
+
+                    <div class="col-12 d-flex justify-content-end gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-toggle="collapse" data-bs-target="#addChoiceCollapse">Cancel</button>
+                        <button type="submit" class="btn btn-cinema rounded-pill px-4">
+                            <i class="bi bi-check-lg me-1"></i> Save Movie Choice
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Choices Grid -->
+    {% if choices %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for choice in choices %}
+                <div class="col">
+                    <div class="card card-cinema h-100 d-flex flex-column {% if choice.id == night.final_movie_id %}border-warning{% endif %}">
+                        <!-- Movie Poster with Aspect Ratio Container -->
+                        <div class="movie-poster-wrapper">
+                            <img src="{{ choice.poster_url }}" alt="{{ choice.title }}" class="movie-poster-img" onerror="this.onerror=null; this.src='/static/images/movie-placeholder.svg';">
+                            {% if choice.id == night.final_movie_id %}
+                                <div class="position-absolute top-0 start-0 m-2">
+                                    <span class="badge bg-warning text-dark fw-bold px-2.5 py-1.5 shadow">
+                                        <i class="bi bi-trophy-fill"></i> Winner
+                                    </span>
+                                </div>
+                            {% endif %}
+                            {% if choice.id == user_voted_choice_id %}
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge bg-success text-white fw-bold px-2.5 py-1.5 shadow">
+                                        <i class="bi bi-check2-circle"></i> Your Pick
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h3 class="card-title h5 text-white fw-bold mb-0 text-truncate" title="{{ choice.title }}">{{ choice.title }}</h3>
+                            </div>
+                            <span class="badge bg-secondary rounded-pill align-self-start mb-3">{{ choice.genre }}</span>
+
+                            <p class="card-text text-secondary small flex-grow-1 mb-3">
+                                <strong class="text-light">Reason:</strong> {{ choice.reason }}
+                            </p>
+
+                            <!-- Votes Progress Bar -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center small text-secondary mb-1">
+                                    <span>Votes</span>
+                                    <span class="fw-bold text-light">{{ choice.vote_count }} ({{ choice.vote_percentage }}%)</span>
+                                </div>
+                                <div class="vote-progress">
+                                    <div class="vote-progress-bar" style="width: {{ choice.vote_percentage }}%;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Trailer Button (If available) -->
+                            {% if choice.trailer_url and choice.trailer_embed_url %}
+                                <button type="button" class="btn btn-outline-light btn-sm w-100 mb-2 rounded-pill" data-bs-toggle="modal" data-bs-target="#trailerModal" data-trailer-url="{{ choice.trailer_embed_url }}" data-movie-title="{{ choice.title }}">
+                                    <i class="bi bi-play-circle text-warning me-1"></i> Watch Trailer
+                                </button>
+                            {% endif %}
+
+                            <!-- Action Buttons: Voting & Deletion -->
+                            <div class="d-flex gap-2 mt-auto pt-2 border-top border-secondary">
+                                {% if night.status == 'open' %}
+                                    {% if session.get('user_id') %}
+                                        <form method="POST" action="{{ url_for('vote_movie', night_id=night.id) }}" class="flex-grow-1">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="choice_id" value="{{ choice.id }}">
+                                            {% if choice.id == user_voted_choice_id %}
+                                                <button type="submit" class="btn btn-success btn-sm w-100 rounded-pill" disabled>
+                                                    <i class="bi bi-check-circle-fill me-1"></i> Voted
+                                                </button>
+                                            {% elif user_voted_choice_id %}
+                                                <button type="submit" class="btn btn-outline-warning btn-sm w-100 rounded-pill">
+                                                    <i class="bi bi-arrow-repeat me-1"></i> Switch Vote
+                                                </button>
+                                            {% else %}
+                                                <button type="submit" class="btn btn-cinema btn-sm w-100 rounded-pill">
+                                                    <i class="bi bi-hand-thumbs-up me-1"></i> Vote
+                                                </button>
+                                            {% endif %}
+                                        </form>
+                                    {% else %}
+                                        <a href="{{ url_for('login') }}" class="btn btn-outline-secondary btn-sm w-100 rounded-pill">
+                                            Log in to vote
+                                        </a>
+                                    {% endif %}
+
+                                    <!-- Delete Choice Button for Creator -->
+                                    {% if is_creator %}
+                                        <form method="POST" action="{{ url_for('delete_movie_choice', night_id=night.id, choice_id=choice.id) }}" onsubmit="return confirm('Are you sure you want to delete {{ choice.title }}?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2" title="Delete this choice">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                {% else %}
+                                    <!-- Finalized View -->
+                                    <button class="btn btn-secondary btn-sm w-100 rounded-pill" disabled>
+                                        <i class="bi bi-lock me-1"></i> Voting Closed
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty Choices State -->
+        <div class="card card-cinema p-5 text-center my-4">
+            <i class="bi bi-film text-secondary mb-3" style="font-size: 3rem;"></i>
+            <h4 class="text-light fw-bold">No Movie Choices Suggested Yet</h4>
+            <p class="text-secondary mx-auto mb-3" style="max-width: 480px;">
+                {% if is_creator %}
+                    As the organizer, add at least two movie choices so friends and attendees can vote on what to watch!
+                {% else %}
+                    The organizer has not added movie choices yet. Check back soon to cast your vote!
+                {% endif %}
+            </p>
+            {% if is_creator and night.status == 'open' %}
+                <div>
+                    <button type="button" class="btn btn-cinema rounded-pill px-4" data-bs-toggle="collapse" data-bs-target="#addChoiceCollapse">
+                        <i class="bi bi-plus-lg me-1"></i> Add First Movie Choice
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal: Finalize Winner (For Organizer) -->
+{% if is_creator and night.status == 'open' and choices|length >= 2 %}
+<div class="modal fade" id="finalizeModal" tabindex="-1" aria-labelledby="finalizeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-warning">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-warning d-flex align-items-center gap-2" id="finalizeModalLabel">
+                    <i class="bi bi-trophy-fill"></i> Finalize Winning Movie
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('finalize_movie_night', night_id=night.id) }}">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <p class="small text-secondary mb-3">
+                        Review the votes below and pick the winning movie. Once finalized, voting will permanently close.
+                    </p>
+
+                    <label class="form-label text-light fw-semibold small text-uppercase mb-2">Select the Movie to Watch:</label>
+                    <div class="d-flex flex-column gap-2 mb-3">
+                        {% for choice in choices %}
+                            <label class="p-3 rounded border border-secondary bg-black d-flex align-items-center justify-content-between cursor-pointer">
+                                <div class="d-flex align-items-center gap-3">
+                                    <input class="form-check-input mt-0" type="radio" name="final_movie_id" value="{{ choice.id }}" required {% if loop.first %}checked{% endif %}>
+                                    <div>
+                                        <span class="text-white fw-bold d-block">{{ choice.title }}</span>
+                                        <span class="text-secondary small">{{ choice.genre }}</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-secondary rounded-pill">
+                                    {{ choice.vote_count }} vote{{ 's' if choice.vote_count != 1 else '' }}
+                                </span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-cinema rounded-pill px-4">
+                        <i class="bi bi-check-circle-fill me-1"></i> Confirm Final Selection
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal: Delete Movie Night Confirmation (For Organizer) -->
+{% if is_creator %}
+<div class="modal fade" id="deleteNightModal" tabindex="-1" aria-labelledby="deleteNightModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-danger">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-danger d-flex align-items-center gap-2" id="deleteNightModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Delete Movie Night
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>"{{ night.title }}"</strong>?</p>
+                <p class="text-secondary small mb-0">
+                    This action is permanent and will remove all suggested movie choices and votes associated with this night.
+                </p>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('delete_movie_night', night_id=night.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">
+                        <i class="bi bi-trash-fill me-1"></i> Delete Movie Night
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="light-page">
+  <h1 class="page-title">Settings</h1>
+
+  <div class="settings-card">
+    <h3>Profile</h3>
+    <p class="muted">Name: <strong>{{ user_name }}</strong></p>
+  </div>
+
+  <div class="settings-card">
+    <h3>Temperature Unit</h3>
+    <label class="radio"><input type="radio" name="unit" value="C" {{ 'checked' if unit == 'C' }}> Celsius (&deg;C)</label>
+    <label class="radio"><input type="radio" name="unit" value="F" {{ 'checked' if unit == 'F' }}> Fahrenheit (&deg;F)</label>
+  </div>
+
+  <div class="settings-card">
+    <h3>Your Data</h3>
+    <p class="muted">Remove the data saved on this computer.</p>
+    <button class="btn-danger" id="clear-history-btn">Clear History</button>
+    <button class="btn-danger" id="clear-cities-btn">Remove All Cities</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endblock %}

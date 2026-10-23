@@ -1,0 +1,6 @@
+{
+  "name": "Movie Night Planner",
+  "description": "A complete, cinematic Python Flask & MySQL web application to plan movie nights, suggest titles with real posters & trailers, vote, and select the final film.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

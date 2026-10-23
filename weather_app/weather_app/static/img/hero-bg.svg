@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 700" preserveAspectRatio="xMidYMin slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1F63C9"/><stop offset=".55" stop-color="#4C93E6"/><stop offset="1" stop-color="#A9D2F7"/>
+    </linearGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EAF4FF" stop-opacity="0"/><stop offset="1" stop-color="#EAF4FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="700" fill="url(#sky)"/>
+  <g fill="#fff" opacity=".35">
+    <ellipse cx="300" cy="140" rx="190" ry="34"/><ellipse cx="520" cy="170" rx="150" ry="26"/>
+    <ellipse cx="1250" cy="110" rx="210" ry="36"/><ellipse cx="1480" cy="190" rx="160" ry="28"/>
+  </g>
+  <polygon points="0,470 160,360 300,430 470,300 640,430 800,350 980,450 1180,310 1360,430 1600,340 1600,700 0,700" fill="#6C8FC0" opacity=".85"/>
+  <polygon points="0,520 220,420 380,500 560,400 760,510 980,420 1200,520 1400,430 1600,510 1600,700 0,700" fill="#4B7A8E"/>
+  <polygon points="0,570 200,500 420,560 640,505 860,570 1100,510 1340,575 1600,520 1600,700 0,700" fill="#4E8A52"/>
+  <polygon points="0,620 260,570 520,615 800,575 1080,620 1340,580 1600,620 1600,700 0,700" fill="#6BA05A"/>
+  <rect y="430" width="1600" height="270" fill="url(#fade)"/>
+</svg>

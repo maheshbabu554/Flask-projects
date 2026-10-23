@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Plan a Movie Night{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-7">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-secondary text-decoration-none"><i class="bi bi-arrow-left me-1"></i>All Movie Nights</a></li>
+                    <li class="breadcrumb-item active text-warning" aria-current="page">Plan New Night</li>
+                </ol>
+            </nav>
+
+            <div class="card card-cinema p-4 p-md-5">
+                <div class="mb-4">
+                    <span class="badge bg-warning text-dark px-3 py-1.5 rounded-pill fw-bold mb-2">Host an Event</span>
+                    <h1 class="h3 text-white fw-bold">Plan a Movie Night</h1>
+                    <p class="text-secondary small">Set up your event details. Once created, you can suggest movie choices and invite friends to vote.</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('create_movie_night') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label text-secondary small fw-bold">Movie Night Title *</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" id="title" name="title" value="{{ form_data.title if form_data else '' }}" required placeholder="e.g. 90s Comedy Throwback, Friday Sci-Fi Marathon" maxlength="150">
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <!-- Date -->
+                        <div class="col-md-6">
+                            <label for="date" class="form-label text-secondary small fw-bold">Event Date *</label>
+                            <input type="date" class="form-control bg-dark text-light border-secondary" id="date" name="date" value="{{ form_data.date if form_data else '' }}" required>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="col-md-6">
+                            <label for="category" class="form-label text-secondary small fw-bold">Category *</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="category" name="category" required>
+                                <option value="" disabled {% if not form_data or not form_data.category %}selected{% endif %}>Select category...</option>
+                                <option value="Comedy" {% if form_data and form_data.category == 'Comedy' %}selected{% endif %}>Comedy</option>
+                                <option value="Action" {% if form_data and form_data.category == 'Action' %}selected{% endif %}>Action</option>
+                                <option value="Animation" {% if form_data and form_data.category == 'Animation' %}selected{% endif %}>Animation</option>
+                                <option value="Other" {% if form_data and form_data.category == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label for="description" class="form-label text-secondary small fw-bold">Description &amp; Theme *</label>
+                        <textarea class="form-control bg-dark text-light border-secondary" id="description" name="description" rows="4" required placeholder="Tell everyone what this movie night is about, popcorn arrangements, hangout vibes...">{{ form_data.description if form_data else '' }}</textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-2 border-top border-secondary">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+                        <button type="submit" class="btn btn-cinema rounded-pill px-4 fw-bold">
+                            <i class="bi bi-calendar-check me-1"></i> Create Movie Night
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

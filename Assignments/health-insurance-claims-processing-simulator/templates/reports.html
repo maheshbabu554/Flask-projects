@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Operational Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-8">
+        <h2 class="page-title">
+            <i class="bi bi-bar-chart-fill text-primary me-2"></i>Claims Analytics & Operational Reports
+        </h2>
+        <div class="page-description">
+            Aggregate portfolio statistics, adjudication throughput, and settlement disbursement metrics.
+        </div>
+    </div>
+    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+        <span class="badge bg-light text-dark border px-3 py-2">
+            <i class="bi bi-database-check text-success me-1"></i> Live Database Aggregation
+        </span>
+    </div>
+</div>
+
+<!-- Financial Summary KPIs -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card card-custom">
+            <div class="stat-label">Total Claims Count</div>
+            <div class="stat-value tabular-nums">{{ total_count }}</div>
+            <div class="text-muted small mt-1">Logged across all policies</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card card-custom">
+            <div class="stat-label">Total Requested Volume</div>
+            <div class="stat-value text-navy tabular-nums" style="font-size: 1.5rem;">{{ total_requested | currency }}</div>
+            <div class="text-muted small mt-1">Submitted claim value</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card card-custom">
+            <div class="stat-label">Approved Eligible Total</div>
+            <div class="stat-value text-primary tabular-nums" style="font-size: 1.5rem;">{{ total_eligible | currency }}</div>
+            <div class="text-muted small mt-1">Post-adjudication eligible</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card card-custom">
+            <div class="stat-label">Total Simulated Settled</div>
+            <div class="stat-value text-success tabular-nums" style="font-size: 1.5rem;">{{ total_settled | currency }}</div>
+            <div class="text-muted small mt-1">Disbursed to beneficiaries</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    
+    <!-- Status Distribution -->
+    <div class="col-lg-6">
+        <div class="card card-custom h-100">
+            <div class="card-header card-header-clean">
+                <span class="fw-bold text-navy">
+                    <i class="bi bi-pie-chart-fill text-primary me-2"></i>Claims by Lifecycle Stage
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-column gap-3">
+                    {% for st, count in status_counts.items() %}
+                    {% set pct = (count / total_count * 100) if total_count > 0 else 0 %}
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-1 small">
+                            <span class="fw-semibold text-capitalize text-navy">{{ st.replace('_', ' ') }}</span>
+                            <span class="text-muted tabular-nums">{{ count }} claims ({{ "%.1f" | format(pct) }}%)</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ pct }}%;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Claim Type & Treatment Type -->
+    <div class="col-lg-6">
+        <div class="card card-custom h-100">
+            <div class="card-header card-header-clean">
+                <span class="fw-bold text-navy">
+                    <i class="bi bi-segmented-nav text-primary me-2"></i>Portfolio Mix & Treatment Breakdown
+                </span>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold text-navy mb-3" style="font-size: 0.88rem;">Claim Type (Settlement Channel)</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <div class="p-3 border rounded bg-light text-center">
+                            <span class="small text-muted d-block">Cashless (Hospital Network)</span>
+                            <strong class="fs-4 text-navy tabular-nums">{{ type_counts.cashless }}</strong>
+                            <div class="text-muted small">{{ "%.1f" | format((type_counts.cashless / total_count * 100) if total_count > 0 else 0) }}% of total</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 border rounded bg-light text-center">
+                            <span class="small text-muted d-block">Reimbursement (Policyholder)</span>
+                            <strong class="fs-4 text-navy tabular-nums">{{ type_counts.reimbursement }}</strong>
+                            <div class="text-muted small">{{ "%.1f" | format((type_counts.reimbursement / total_count * 100) if total_count > 0 else 0) }}% of total</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-navy mb-3" style="font-size: 0.88rem;">Treatment Category</h6>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="p-3 border rounded bg-light text-center">
+                            <span class="small text-muted d-block">Inpatient Hospitalization</span>
+                            <strong class="fs-4 text-primary tabular-nums">{{ treatment_counts.inpatient }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 border rounded bg-light text-center">
+                            <span class="small text-muted d-block">Daycare Procedures</span>
+                            <strong class="fs-4 text-primary tabular-nums">{{ treatment_counts.daycare }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Hospital Performance Table -->
+<div class="card card-custom">
+    <div class="card-header card-header-clean">
+        <span class="fw-bold text-navy">
+            <i class="bi bi-hospital text-primary me-2"></i>Provider Performance & Payout Summary
+        </span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-custom table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Hospital Provider</th>
+                        <th>Location City</th>
+                        <th>Network Status</th>
+                        <th class="text-end">Total Claims</th>
+                        <th class="text-end">Settled Payout Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in hospital_stats %}
+                    <tr>
+                        <td class="fw-semibold text-navy">{{ h.hospital.name }}</td>
+                        <td>{{ h.hospital.city }}</td>
+                        <td>
+                            {% if h.hospital.is_network() %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">Network</span>
+                            {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary border">Non-Network</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-semibold tabular-nums">{{ h.claim_count }}</td>
+                        <td class="text-end fw-bold tabular-nums text-success">{{ h.paid_amount | currency }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
