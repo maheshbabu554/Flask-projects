@@ -257,6 +257,27 @@ class ClaimHistory(db.Model):
     )
 
 
+class ClaimApprovalHistory(db.Model):
+    """Append-only audit records for claim approval and rejection decisions."""
+    __tablename__ = "claim_approval_history"
+
+    history_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    claim_id = db.Column(db.Integer, db.ForeignKey("claims.claim_id"), nullable=False, index=True)
+    admin_user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
+    decision = db.Column(db.String(20), nullable=False)
+    requested_amount_inr = db.Column(db.Numeric(12, 2), nullable=False)
+    approved_amount_inr = db.Column(db.Numeric(12, 2), nullable=True)
+    reason = db.Column(db.Text, nullable=False)
+    evidence_reference = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    claim = db.relationship("Claim", backref=db.backref(
+        "approval_history", lazy=True,
+        order_by="ClaimApprovalHistory.created_at.desc()"
+    ))
+    reviewer = db.relationship("User", foreign_keys=[admin_user_id])
+
+
 class Settlement(db.Model):
     __tablename__ = "settlements"
 

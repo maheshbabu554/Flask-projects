@@ -286,8 +286,8 @@
                 {% endif %}
 
                 <!-- Claims Officer Actions -->
-                {% if user.role == ROLE_CLAIMS_OFFICER %}
-                    {% if claim.status == 'submitted' %}
+                {% if user.role in [ROLE_CLAIMS_OFFICER, ROLE_ADMIN] %}
+                    {% if claim.status == 'submitted' and user.role == ROLE_CLAIMS_OFFICER %}
                         <form method="POST" action="{{ url_for('claim_assign', claim_id=claim.claim_id) }}" class="mb-2">
                             <button type="submit" class="btn btn-teal w-100">
                                 <i class="bi bi-person-check-fill me-1"></i> Assign to Me & Start Review
@@ -300,10 +300,12 @@
                                 <i class="bi bi-check-lg me-1"></i> Approve Claim
                             </button>
 
+                            {% if user.role == ROLE_CLAIMS_OFFICER %}
                             <!-- Request Info Modal Trigger -->
                             <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#moreInfoModal">
                                 <i class="bi bi-question-circle me-1"></i> Request More Info
                             </button>
+                            {% endif %}
 
                             <!-- Reject Modal Trigger -->
                             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
@@ -377,8 +379,8 @@
 
 </div>
 
-<!-- Approval Modal (Claims Officer) -->
-{% if user.role == ROLE_CLAIMS_OFFICER and claim.status == 'in_review' %}
+<!-- Approval Modal (Claims Officer / Admin) -->
+{% if user.role in [ROLE_CLAIMS_OFFICER, ROLE_ADMIN] and claim.status == 'in_review' %}
 <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <form method="POST" action="{{ url_for('claim_approve', claim_id=claim.claim_id) }}" class="modal-content card-custom">
@@ -392,10 +394,10 @@
                 <div class="mb-3">
                     <label class="form-label small fw-semibold">Eligible Approved Amount (INR)</label>
                     <input type="number" step="0.01" class="form-control" name="eligible_amount" id="eligible_amount_input"
-                           value="{{ claim.requested_amount_inr }}" max="{{ claim.requested_amount_inr }}" min="1"
+                           value="{{ claim.requested_amount_inr }}" max="{{ policy_summary.remaining_cover if policy_summary.remaining_cover < claim.requested_amount_inr else claim.requested_amount_inr }}" min="1"
                            data-deductible="{{ claim.policy.plan.deductible_inr }}"
                            data-copay="{{ claim.policy.plan.copay_percent }}" required>
-                    <div class="form-text small text-muted">Requested amount: {{ claim.requested_amount_inr | currency }}</div>
+                    <div class="form-text small text-muted">Requested: {{ claim.requested_amount_inr | currency }}. Remaining policy cover: {{ policy_summary.remaining_cover | currency }}. Approval is capped at the lower of these values.</div>
                 </div>
 
                 <!-- Live calculation preview in modal -->
@@ -416,7 +418,12 @@
 
                 <div class="mb-3">
                     <label class="form-label small fw-semibold">Approval Rationale & Note</label>
-                    <textarea name="reason" class="form-control" rows="3" placeholder="e.g. Inpatient treatment approved per policy terms. Hospital bills verified against records." required></textarea>
+                    <textarea name="reason" class="form-control" rows="3" placeholder="Explain the assessment and why the evidence supports this amount." required></textarea>
+                </div>
+                <div class="mb-1">
+                    <label class="form-label small fw-semibold">Supporting Evidence Reference</label>
+                    <input type="text" name="evidence_reference" class="form-control" maxlength="255" placeholder="Verified bill, discharge summary, or document reference" required>
+                    <div class="form-text">Evidence does not override requested amount or remaining coverage limits.</div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -476,7 +483,9 @@
                 </p>
                 <div class="mb-3">
                     <label class="form-label small fw-semibold">Rejection Reason</label>
-                    <textarea name="reason" class="form-control" rows="3" placeholder="e.g. Daycare treatment not covered under Essential Care inpatient-only plan (BRD Clause 4.2)." required></textarea>
+                    <textarea name="reason" class="form-control" rows="3" placeholder="State the specific policy or documentation reason for rejection." required></textarea>
+                    <label class="form-label small fw-semibold mt-2">Evidence / Document Reference (optional)</label>
+                    <input type="text" name="evidence_reference" class="form-control" maxlength="255" placeholder="Document reference">
                 </div>
             </div>
             <div class="modal-footer">

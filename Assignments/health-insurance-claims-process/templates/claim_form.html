@@ -51,14 +51,20 @@
                             <input type="text" class="form-control" value="Policy #{{ claim.policy_id }} ({{ claim.policy.plan.plan_name }})" disabled>
                             <input type="hidden" name="policy_id" value="{{ claim.policy_id }}">
                             {% else %}
+                            {% if user.role == ROLE_HOSPITAL %}
+                            <input type="search" class="form-control" id="hospital_policy_search" autocomplete="off" placeholder="Search policy number, policyholder, or patient name" required>
+                            <input type="hidden" id="policy_select" name="policy_id" required>
+                            <div class="form-text small">Search and choose the matching policy and covered patient.</div>
+                            <div id="hospital_policy_results" class="list-group mt-2" aria-live="polite"></div>
+                            <div id="selected_policy_summary" class="small mt-2"></div>
+                            {% else %}
                             <select class="form-select" id="policy_select" name="policy_id" required>
                                 <option value="">-- Choose Active Policy --</option>
                                 {% for pol in policies %}
-                                <option value="{{ pol.policy_id }}">
-                                    Policy #{{ pol.policy_id }} — {{ pol.plan.plan_name }} (Valid to {{ pol.end_date | date_format }})
-                                </option>
+                                <option value="{{ pol.policy_id }}">Policy #{{ pol.policy_id }} — {{ pol.plan.plan_name }} (Valid to {{ pol.end_date | date_format }})</option>
                                 {% endfor %}
                             </select>
+                            {% endif %}
                             {% endif %}
                         </div>
 
@@ -71,15 +77,19 @@
                             <input type="text" class="form-control" value="{{ claim.member.display_name }} ({{ claim.member.relationship }})" disabled>
                             <input type="hidden" name="member_id" value="{{ claim.member_id }}">
                             {% else %}
+                            {% if user.role == ROLE_HOSPITAL %}
+                            <input type="text" class="form-control" id="selected_member_text" placeholder="Choose a patient from search results" readonly required>
+                            <input type="hidden" id="member_select" name="member_id" required>
+                            <div class="form-text small text-muted">Only covered members associated with the selected policy can be selected.</div>
+                            {% else %}
                             <select class="form-select" id="member_select" name="member_id" required>
                                 <option value="">-- Select Patient --</option>
                                 {% for mem in all_members %}
-                                <option value="{{ mem.member_id }}" data-policy-id="{{ mem.policy_id }}">
-                                    {{ mem.display_name }} ({{ mem.relationship | title }})
-                                </option>
+                                <option value="{{ mem.member_id }}" data-policy-id="{{ mem.policy_id }}">{{ mem.display_name }} ({{ mem.relationship | title }})</option>
                                 {% endfor %}
                             </select>
                             <div class="form-text small text-muted">Beneficiaries dynamically filter based on the chosen policy.</div>
+                            {% endif %}
                             {% endif %}
                         </div>
 

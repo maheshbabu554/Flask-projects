@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Add Account' if mode == 'create' else 'Edit Account' }} - Administration{% endblock %}
+{% block content %}
+<div class="row justify-content-center py-3">
+  <div class="col-lg-9 col-xl-8">
+    <div class="card card-custom">
+      <div class="card-header card-header-clean d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">{{ 'Create Account' if mode == 'create' else 'Edit Account / Reset Password' }}</h4>
+        <a href="{{ url_for('admin') }}" class="btn btn-sm btn-outline-secondary">Back to Admin</a>
+      </div>
+      <div class="card-body p-4">
+        <p class="text-muted">Passwords are hashed before being saved. The original password is never stored or displayed.</p>
+        <form method="POST" novalidate>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="username">Username *</label>
+              <input class="form-control" id="username" name="username" maxlength="80" required value="{{ request.form.get('username', account.username if account else '') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="display_name">Display name *</label>
+              <input class="form-control" id="display_name" name="display_name" maxlength="120" required value="{{ request.form.get('display_name', account.display_name if account else '') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="role">Role *</label>
+              {% set selected_role = request.form.get('role', account.role if account else 'policyholder') %}
+              <select class="form-select" id="role" name="role" required>
+                <option value="policyholder" {{ 'selected' if selected_role == 'policyholder' else '' }}>Policyholder</option>
+                <option value="claims_officer" {{ 'selected' if selected_role == 'claims_officer' else '' }}>Claims Officer</option>
+                <option value="admin" {{ 'selected' if selected_role == 'admin' else '' }}>Administrator</option>
+                {% if mode == 'edit' %}<option value="hospital" {{ 'selected' if selected_role == 'hospital' else '' }}>Hospital</option>{% endif %}
+              </select>
+              {% if mode == 'create' %}<div class="form-text">To create a hospital and its login together, use Add Hospital + Login on the admin page.</div>{% endif %}
+            </div>
+            {% if mode == 'edit' %}
+            <div class="col-md-6" id="hospitalField">
+              <label class="form-label" for="hospital_id">Linked hospital (hospital role only)</label>
+              <select class="form-select" id="hospital_id" name="hospital_id">
+                <option value="">Select hospital</option>
+                {% for h in hospitals %}<option value="{{ h.hospital_id }}" {{ 'selected' if account.hospital_id == h.hospital_id else '' }}>{{ h.name }} — {{ h.city }}</option>{% endfor %}
+              </select>
+            </div>
+            {% endif %}
+            <div class="col-md-6">
+              <label class="form-label" for="password">{{ 'Password *' if mode == 'create' else 'New password (leave blank to keep current)' }}</label>
+              <input class="form-control" type="password" id="password" name="password" minlength="8" {% if mode == 'create' %}required{% endif %} autocomplete="new-password">
+              <div class="form-text">Minimum 8 characters.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="confirm_password">{{ 'Confirm password *' if mode == 'create' else 'Confirm new password' }}</label>
+              <input class="form-control" type="password" id="confirm_password" name="confirm_password" minlength="8" {% if mode == 'create' %}required{% endif %} autocomplete="new-password">
+            </div>
+            {% if mode == 'create' %}
+            <div class="col-12" id="policyFields">
+              <hr><h5>Policy details for the new policyholder</h5>
+              <p class="small text-muted">A policyholder needs a policy and a member record to submit claims in this simulator.</p>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="plan_id">Insurance plan *</label>
+                  <select class="form-select" id="plan_id" name="plan_id">
+                    <option value="">Select plan</option>
+                    {% for plan in plans %}<option value="{{ plan.plan_id }}" {{ 'selected' if request.form.get('plan_id') == (plan.plan_id|string) else '' }}>{{ plan.plan_name }}</option>{% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-3"><label class="form-label" for="policy_start">Policy start *</label><input class="form-control" type="date" id="policy_start" name="policy_start" value="{{ request.form.get('policy_start', '') }}"></div>
+                <div class="col-md-3"><label class="form-label" for="policy_end">Policy end *</label><input class="form-control" type="date" id="policy_end" name="policy_end" value="{{ request.form.get('policy_end', '') }}"></div>
+                <div class="col-md-8"><label class="form-label" for="member_name">Primary member name *</label><input class="form-control" id="member_name" name="member_name" value="{{ request.form.get('member_name', '') }}" placeholder="Defaults to display name"></div>
+                <div class="col-md-4"><label class="form-label" for="member_relationship">Relationship</label><select class="form-select" id="member_relationship" name="member_relationship"><option value="self">Self</option><option value="spouse">Spouse</option><option value="child">Child</option><option value="parent">Parent</option><option value="other">Other</option></select></div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+          <div class="d-flex gap-2 mt-4">
+            <button class="btn btn-primary" type="submit">{{ 'Create Account' if mode == 'create' else 'Save Changes' }}</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('admin') }}">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  const role = document.getElementById('role');
+  const policyFields = document.getElementById('policyFields');
+  const hospitalField = document.getElementById('hospitalField');
+  const hospitalSelect = document.getElementById('hospital_id');
+  const plan = document.getElementById('plan_id');
+  const start = document.getElementById('policy_start');
+  const end = document.getElementById('policy_end');
+  function updateFields() {
+    if (policyFields && role) {
+      policyFields.style.display = role.value === 'policyholder' ? '' : 'none';
+      [plan, start, end].filter(Boolean).forEach(el => el.required = role.value === 'policyholder');
+    }
+    if (hospitalField && role) {
+      hospitalField.style.display = role.value === 'hospital' ? '' : 'none';
+      if (hospitalSelect) hospitalSelect.required = role.value === 'hospital';
+    }
+  }
+  if (role) { role.addEventListener('change', updateFields); updateFields(); }
+})();
+</script>
+{% endblock %}
