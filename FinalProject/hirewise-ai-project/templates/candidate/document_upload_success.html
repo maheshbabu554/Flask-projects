@@ -1,0 +1,56 @@
+
+{% extends "base.html" %}
+
+{% block title %}Submission Successful | Mitraz{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+
+            <div class="card border-0 shadow-sm text-center">
+
+                <div class="card-body p-5">
+
+                    <div class="mb-4">
+                        <i class="bi bi-check-circle-fill text-success"
+                           style="font-size: 4rem;"></i>
+                    </div>
+
+                    <h2 class="fw-bold mb-3">
+                        Documents Submitted Successfully!
+                    </h2>
+
+                    <p class="text-muted mb-4">
+                        Thank you, {{ candidate.full_name }}.
+                        We have received your documents.
+                        Our recruitment team will review them and contact
+                        you regarding the next steps.
+                    </p>
+
+                    <div class="alert alert-success text-start">
+                        <strong>Submission completed.</strong>
+                        <p class="mb-0 mt-2">
+                            Your one-time document submission is complete.
+                            You cannot upload or replace documents through
+                            this link again.
+                        </p>
+                    </div>
+
+                    <p class="text-muted small mb-0">
+                        Please contact your recruiter if you need to
+                        correct any submitted document.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

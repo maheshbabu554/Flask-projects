@@ -1,0 +1,154 @@
+
+{% extends "base.html" %}
+
+{% block title %}Vacancy Details | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+
+        <div>
+            <h2 class="fw-bold">Vacancy Details</h2>
+            <p class="text-muted mb-0">
+                View complete job opening information.
+            </p>
+        </div>
+
+        <a
+            href="{{ url_for('vacancies.edit_vacancy', vacancy_id=vacancy.id) }}"
+            class="btn btn-primary"
+        >
+            Edit Vacancy
+        </a>
+
+    </div>
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+
+                <div>
+                    <h3 class="fw-bold mb-1">
+                        {{ vacancy.title }}
+                    </h3>
+
+                    <p class="text-muted mb-0">
+                        {{ vacancy.location or 'Location not specified' }}
+                    </p>
+                </div>
+
+                {% if vacancy.status == 'Open' %}
+                    <span class="badge bg-success fs-6">Open</span>
+                {% else %}
+                    <span class="badge bg-secondary fs-6">
+                        {{ vacancy.status }}
+                    </span>
+                {% endif %}
+
+            </div>
+
+            <hr>
+
+            <div class="row g-3 mb-4">
+
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded">
+                        <p class="text-muted mb-1">Number of Openings</p>
+                        <h5 class="fw-bold mb-0">
+                            {{ vacancy.openings }}
+                        </h5>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded">
+                        <p class="text-muted mb-1">Created Date</p>
+                        <h5 class="fw-bold mb-0">
+                            {{ vacancy.created_at.strftime('%d-%m-%Y') if vacancy.created_at else '-' }}
+                        </h5>
+                    </div>
+                </div>
+
+            </div>
+
+            <h5 class="fw-bold mb-2">Job Description</h5>
+
+            <p class="text-muted" style="white-space: pre-line;">
+                {{ vacancy.description }}
+            </p>
+
+            <hr>
+
+            <h5 class="fw-bold mb-3">Required Skills</h5>
+
+            {% if vacancy.required_skills_json %}
+
+                <div class="d-flex flex-wrap gap-2">
+
+                    {% for skill in vacancy.required_skills_json %}
+                        <span class="badge bg-primary-subtle text-primary p-2">
+                            {{ skill }}
+                        </span>
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <p class="text-muted">No required skills specified.</p>
+
+            {% endif %}
+
+            <hr>
+
+            <h5 class="fw-bold mb-3">Optional Skills</h5>
+
+            {% if vacancy.optional_skills_json %}
+
+                <div class="d-flex flex-wrap gap-2">
+
+                    {% for skill in vacancy.optional_skills_json %}
+                        <span class="badge bg-info-subtle text-dark p-2">
+                            {{ skill }}
+                        </span>
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <p class="text-muted">No optional skills specified.</p>
+
+            {% endif %}
+
+            <hr>
+
+            <div class="d-flex flex-wrap gap-2">
+
+                <a
+                    href="{{ url_for('candidates.candidate_list', vacancy_id=vacancy.id) }}"
+                    class="btn btn-success"
+                >
+                    View Candidates
+                </a>
+
+                <a
+                    href="{{ url_for('vacancies.vacancy_list') }}"
+                    class="btn btn-outline-secondary"
+                >
+                    Back to Vacancies
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

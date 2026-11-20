@@ -1,0 +1,2095 @@
+
+{% extends "base.html" %}
+
+{% block title %}Candidate Details | HireWise AI{% endblock %}
+
+{% block content %}
+
+{% set extracted = candidate.extracted_profile_json or {} %}
+
+{% macro render_detail(value) %}
+    {% if value is none or value == '' %}
+        <span class="text-muted">Not available</span>
+    {% elif value is mapping %}
+        {% if value %}
+            <dl class="row mb-0">
+                {% for key, item in value.items() %}
+                    <dt class="col-md-3 text-capitalize">
+                        {{ key|replace('_', ' ') }}
+                    </dt>
+                    <dd class="col-md-9">
+                        {{ render_detail(item) }}
+                    </dd>
+                {% endfor %}
+            </dl>
+        {% else %}
+            <span class="text-muted">No details available.</span>
+        {% endif %}
+    {% elif value is sequence and value is not string %}
+        {% if value %}
+            <ul class="mb-0 ps-3">
+                {% for item in value %}
+                    <li class="mb-2">{{ render_detail(item) }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <span class="text-muted">No details available.</span>
+        {% endif %}
+    {% else %}
+        {{ value }}
+    {% endif %}
+{% endmacro %}
+
+{% set next_statuses = {
+    'New': 'Reviewing',
+    'Reviewing': 'Interview Planned',
+    'Interview Planned': 'Interviewed',
+    'Interviewed': 'Shortlisted',
+    'Shortlisted': 'Selected'
+} %}
+
+{% set terminal_statuses = ['Rejected', 'Closed', 'Deleted', 'Offer Sent'] %}
+{% set overall_status = overall_verification_status|default('Pending', true) %}
+{% set overall_finalized = overall_verification_finalized|default(false, true) %}
+{% set overall_is_finalized = overall_finalized or overall_status|lower in ['accepted', 'rejected', 'success', 'verified'] %}
+
+<div class="container-fluid py-4">
+
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Candidate Details</h2>
+            <p class="text-muted mb-0">
+                Review candidate information and AI-extracted resume details.
+            </p>
+        </div>
+
+        <a href="{{ url_for('candidates.candidate_list') }}"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>
+            Back to Candidates
+        </a>
+    </div>
+
+    <!-- 1. CANDIDATE INFORMATION -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="fw-bold mb-3">Candidate Information</h5>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <strong>Candidate ID</strong>
+                    <p>{{ candidate.id }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Full Name</strong>
+                    <p>{{ candidate.full_name or '-' }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Email</strong>
+                    <p>{{ candidate.email or '-' }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Phone</strong>
+                    <p>{{ candidate.phone or '-' }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Vacancy</strong>
+                    <p>{{ candidate.vacancy.title if candidate.vacancy else '-' }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Recruitment Status</strong>
+                    <p>
+                        <span class="badge text-bg-info">
+                            {{ candidate.status }}
+                        </span>
+                    </p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Created Date</strong>
+                    <p>
+                        {{ candidate.created_at.strftime('%d-%m-%Y %I:%M %p')
+                           if candidate.created_at else '-' }}
+                    </p>
+                </div>
+            </div>
+
+            {% if candidate.resume_path %}
+                <a href="{{ url_for('candidates.download_resume', candidate_id=candidate.id) }}"
+                   class="btn btn-primary btn-sm">
+                    <i class="bi bi-file-earmark-arrow-down me-1"></i>
+                    Download Resume
+                </a>
+            {% else %}
+                <p class="text-muted mb-0">No resume available.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 2. AI RESUME EXTRACTION -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1">AI Resume Extraction</h5>
+                    <p class="text-muted mb-0">
+                        Extract candidate information using the configured AI service.
+                    </p>
+                </div>
+
+                <button type="button"
+                        id="extractAiButton"
+                        class="btn btn-dark"
+                        data-extraction-url="{{ url_for('ai.extract_profile', candidate_id=candidate.id) }}">
+                    <span id="extractButtonText">
+                        <i class="bi bi-stars me-1"></i>
+                        Extract with AI
+                    </span>
+                </button>
+            </div>
+
+            <div id="aiMessage" class="alert d-none" role="alert"></div>
+
+            <div id="aiResults" class="{% if not extracted %}d-none{% endif %}">
+                <hr>
+
+                <h6 class="fw-bold mb-3">Extracted Candidate Details</h6>
+
+                <div class="row g-3 mb-3">
+
+                    <div class="col-md-6">
+                        <strong>Full Name</strong>
+                        <p id="aiName">{{ extracted.get('full_name') or '-' }}</p>
+                    </div>
+
+                    <div class="col-md-6">
+                        <strong>Email</strong>
+                        <p id="aiEmail">{{ extracted.get('email') or '-' }}</p>
+                    </div>
+
+                    <div class="col-md-6">
+                        <strong>Phone</strong>
+                        <p id="aiPhone">{{ extracted.get('phone') or '-' }}</p>
+                    </div>
+
+                    <div class="col-md-6">
+                        <strong>Location</strong>
+                        <p id="aiLocation">{{ extracted.get('location') or '-' }}</p>
+                    </div>
+
+                    <div class="col-12">
+                        <strong>Professional Summary</strong>
+                        <p id="aiSummary" class="mb-0">
+                            {{ extracted.get('summary') or '-' }}
+                        </p>
+                    </div>
+
+                    <div class="col-12">
+                        <strong>Skills</strong>
+                        <div id="aiSkills" class="mt-2">
+                            {% set skills = extracted.get('skills', []) %}
+
+                            {% if skills is string and skills %}
+                                {% for skill in skills.split(',') %}
+                                    <span class="badge text-bg-primary me-1 mb-1">
+                                        {{ skill.strip() }}
+                                    </span>
+                                {% endfor %}
+                            {% elif skills is sequence and skills is not string %}
+                                {% for skill in skills %}
+                                    <span class="badge text-bg-primary me-1 mb-1">
+                                        {{ skill }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">No skills extracted.</span>
+                                {% endfor %}
+                            {% elif skills is mapping %}
+                                {{ render_detail(skills) }}
+                            {% else %}
+                                <span class="text-muted">No skills extracted.</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <strong>Education</strong>
+                        <div id="aiEducation" class="bg-light rounded p-3 mt-2">
+                            {{ render_detail(extracted.get('education')) }}
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <strong>Experience</strong>
+                        <div id="aiExperience" class="bg-light rounded p-3 mt-2">
+                            {{ render_detail(extracted.get('experience')) }}
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <strong>Projects</strong>
+                        <div id="aiProjects" class="bg-light rounded p-3 mt-2">
+                            {{ render_detail(extracted.get('projects')) }}
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <strong>Certifications</strong>
+                        <div id="aiCertifications" class="bg-light rounded p-3 mt-2">
+                            {{ render_detail(extracted.get('certifications')) }}
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    AI-extracted details are suggestions. The recruiter must review
+                    them before confirming the profile.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. RESUME SKILL EVIDENCE MAPPING -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1">Resume Skill Evidence Mapping</h5>
+                    <p class="text-muted mb-0">
+                        Identify supporting evidence for vacancy-required skills in the resume.
+                    </p>
+                </div>
+
+                <button type="button"
+                        id="mapEvidenceButton"
+                        class="btn btn-dark"
+                        data-evidence-url="{{ url_for('ai.analyze_evidence', candidate_id=candidate.id) }}">
+                    <i class="bi bi-search me-1"></i>
+                    Map Skill Evidence
+                </button>
+            </div>
+
+            <div id="evidenceMessage"
+                 class="alert d-none"
+                 role="alert"></div>
+
+            <div id="evidenceResults">
+
+                {% set saved_evidence = evidence_records|default([], true) %}
+
+                {% if saved_evidence %}
+
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <h6 class="fw-bold mb-0">Saved Evidence Results</h6>
+
+                        <span class="badge text-bg-primary">
+                            {{ saved_evidence|length }} Skill(s)
+                        </span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle"
+                               id="evidenceTable">
+
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Skill</th>
+                                    <th>Resume Evidence</th>
+                                    <th>Source Page</th>
+                                    <th>Evidence Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="evidenceTableBody">
+
+                                {% for evidence in saved_evidence %}
+
+                                    {% set evidence_status = (evidence.evidence_status or 'uncertain')|lower|replace('_', ' ') %}
+
+                                    <tr>
+                                        <td class="fw-semibold">
+                                            {{ evidence.skill or '-' }}
+                                        </td>
+
+                                        <td class="text-break">
+                                            {{ evidence.excerpt or 'No supporting evidence available.' }}
+                                        </td>
+
+                                        <td>
+                                            {{ evidence.source_page if evidence.source_page else '-' }}
+                                        </td>
+
+                                        <td>
+                                            {% if evidence_status == 'evidence found' %}
+                                                <span class="badge text-bg-success">
+                                                    Evidence Found
+                                                </span>
+                                            {% elif evidence_status == 'not found' %}
+                                                <span class="badge text-bg-danger">
+                                                    Not Found
+                                                </span>
+                                            {% else %}
+                                                <span class="badge text-bg-warning">
+                                                    Uncertain
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </div>
+
+                {% else %}
+
+                    <div id="evidenceEmptyState" class="text-center py-4">
+                        <i class="bi bi-file-earmark-search display-5 text-muted"></i>
+
+                        <p class="text-muted mt-2 mb-1">
+                            No skill evidence mapping has been performed yet.
+                        </p>
+
+                        <small class="text-muted">
+                            Click Map Skill Evidence to analyze the resume against the vacancy requirements.
+                        </small>
+                    </div>
+
+                    <div class="table-responsive d-none" id="evidenceTableContainer">
+                        <table class="table table-bordered table-hover align-middle"
+                               id="evidenceTable">
+
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Skill</th>
+                                    <th>Resume Evidence</th>
+                                    <th>Source Page</th>
+                                    <th>Evidence Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="evidenceTableBody"></tbody>
+                        </table>
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+            <div class="alert alert-info small mb-0 mt-3">
+                <i class="bi bi-info-circle me-1"></i>
+                AI identifies resume evidence only. It does not score, rank, accept,
+                or reject candidates. The recruiter makes all hiring decisions.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 4. CONFIRM CANDIDATE PROFILE -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+
+            <h5 class="fw-bold mb-2">Confirm Candidate Profile</h5>
+
+            <p class="text-muted">
+                Review the candidate's information, correct any mistakes,
+                and save the recruiter-confirmed profile.
+            </p>
+
+            <form method="POST"
+                  action="{{ url_for('candidates.update_candidate_profile', candidate_id=candidate.id) }}">
+
+                {% if csrf_token is defined %}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% endif %}
+
+                <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input type="text"
+                           id="confirmName"
+                           name="full_name"
+                           class="form-control"
+                           maxlength="150"
+                           value="{{ candidate.full_name or extracted.get('full_name') or '' }}"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email"
+                           id="confirmEmail"
+                           name="email"
+                           class="form-control"
+                           maxlength="120"
+                           value="{{ candidate.email or extracted.get('email') or '' }}"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Phone</label>
+                    <input type="text"
+                           id="confirmPhone"
+                           name="phone"
+                           class="form-control"
+                           value="{{ candidate.phone or extracted.get('phone') or '' }}">
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Confirm Profile
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- 5. CANDIDATE DOCUMENTS -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1">Candidate Documents</h5>
+                    <p class="text-muted mb-0">
+                        Review and verify the documents submitted by the candidate.
+                    </p>
+                </div>
+
+                <span class="badge text-bg-primary">
+                    <span id="documentCount">{{ candidate_documents|length }}</span>
+                    Document(s)
+                </span>
+            </div>
+
+            <div id="documentVerificationMessage"
+                 class="alert d-none"
+                 role="alert"></div>
+
+            {% if candidate_documents %}
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle"
+                           id="candidateDocumentsTable">
+
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Document Name</th>
+                                <th>Category</th>
+                                <th>Document Type</th>
+                                <th>Uploaded Date</th>
+                                <th>Verification Status</th>
+                                <th>Remarks</th>
+                                <th>Document Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for document in candidate_documents %}
+
+                                {% set mime = (document.mime_type or '')|lower %}
+                                {% set verification = document.verification_status or 'Pending Verification' %}
+                                {% set verification_lower = verification|lower %}
+                                {% set document_reviewed = verification_lower in ['accepted', 'verified', 'rejected'] %}
+
+                                <tr id="document-row-{{ document.id }}"
+                                    data-document-id="{{ document.id }}">
+
+                                    <td>{{ loop.index }}</td>
+
+                                    <td class="text-break">
+                                        <i class="bi bi-file-earmark-text text-primary me-1"></i>
+                                        {{ document.original_filename or 'Unnamed document' }}
+                                    </td>
+
+                                    <td>
+                                        {{ document.category|replace('_', ' ')|title if document.category else '-' }}
+                                    </td>
+
+                                    <td>
+                                        {{ document.document_type|replace('_', ' ')|title if document.document_type else '-' }}
+                                    </td>
+
+                                    <td>
+                                        {{ document.uploaded_at.strftime('%d-%m-%Y %I:%M %p')
+                                           if document.uploaded_at else '-' }}
+                                    </td>
+
+                                    <td>
+                                        <span class="document-status-badge">
+                                            {% if verification_lower in ['accepted', 'verified'] %}
+                                                <span class="badge text-bg-success">Accepted</span>
+                                            {% elif verification_lower == 'rejected' %}
+                                                <span class="badge text-bg-danger">Rejected</span>
+                                            {% else %}
+                                                <span class="badge text-bg-warning">{{ verification }}</span>
+                                            {% endif %}
+                                        </span>
+                                    </td>
+
+                                    <td class="text-break document-remarks">
+                                        {{ document.verification_notes or '-' }}
+
+                                        {% if document.verified_at %}
+                                            <hr class="my-2">
+                                            <small class="text-muted">
+                                                Verified on:
+                                                {{ document.verified_at.strftime('%d-%m-%Y %I:%M %p') }}
+                                            </small>
+                                        {% endif %}
+
+                                        {% if document.verified_by_id %}
+                                            <br>
+                                            <small class="text-muted">
+                                                Verified by recruiter ID:
+                                                {{ document.verified_by_id }}
+                                            </small>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-2">
+
+                                            {% if mime in ['application/pdf', 'image/jpeg', 'image/png'] %}
+                                                <a href="{{ url_for('candidates.view_candidate_document', candidate_id=candidate.id, document_id=document.id) }}"
+                                                   class="btn btn-sm btn-outline-success"
+                                                   target="_blank"
+                                                   rel="noopener noreferrer">
+                                                    <i class="bi bi-eye me-1"></i>
+                                                    View
+                                                </a>
+                                            {% endif %}
+
+                                            <a href="{{ url_for('candidates.download_candidate_document', candidate_id=candidate.id, document_id=document.id) }}"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-download me-1"></i>
+                                                Download
+                                            </a>
+
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                {% if not document_reviewed
+                                      and candidate.status not in terminal_statuses
+                                      and not overall_is_finalized %}
+
+                                    <tr id="verification-row-{{ document.id }}"
+                                        class="document-verification-row">
+
+                                        <td colspan="8" class="bg-light">
+
+                                            <form method="POST"
+                                                  class="document-verification-form"
+                                                  data-document-id="{{ document.id }}"
+                                                  action="{{ url_for('candidates.verify_candidate_document', candidate_id=candidate.id, document_id=document.id) }}">
+
+                                                {% if csrf_token is defined %}
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                {% endif %}
+
+                                                <div class="row g-3 align-items-end">
+
+                                                    <div class="col-md-8">
+                                                        <label class="form-label fw-semibold">
+                                                            Verification Remarks
+                                                        </label>
+
+                                                        <textarea name="remarks"
+                                                                  class="form-control verification-remarks"
+                                                                  rows="2"
+                                                                  maxlength="2000"
+                                                                  placeholder="Remarks are required when rejecting a document."></textarea>
+                                                    </div>
+
+                                                    <div class="col-md-4">
+                                                        <label class="form-label fw-semibold d-block">
+                                                            Verification Decision
+                                                        </label>
+
+                                                        <div class="d-flex flex-wrap gap-2">
+
+                                                            <button type="submit"
+                                                                    name="decision"
+                                                                    value="Accepted"
+                                                                    class="btn btn-success"
+                                                                    data-decision="Accepted">
+                                                                <i class="bi bi-check-circle me-1"></i>
+                                                                Accept
+                                                            </button>
+
+                                                            <button type="submit"
+                                                                    name="decision"
+                                                                    value="Rejected"
+                                                                    class="btn btn-danger"
+                                                                    data-decision="Rejected">
+                                                                <i class="bi bi-x-circle me-1"></i>
+                                                                Reject
+                                                            </button>
+
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </form>
+
+                                        </td>
+                                    </tr>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- DOCUMENT REVIEW PROGRESS -->
+                <div class="border rounded p-3 mt-3">
+
+                    <div class="d-flex justify-content-between flex-wrap gap-2">
+                        <strong>Document Review Progress</strong>
+
+                        <span class="text-muted small" id="documentProgressText">
+                            {% if all_documents_reviewed %}
+                                All documents reviewed.
+                            {% else %}
+                                Review all submitted documents.
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="progress mt-2"
+                         role="progressbar"
+                         aria-label="Document review progress"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+
+                        <div id="documentProgressBar"
+                             class="progress-bar"
+                             style="width: 0%">
+                        </div>
+                    </div>
+
+                    <p class="small text-muted mb-0 mt-2">
+                        Reviewed:
+                        <strong id="reviewedDocumentCount">0</strong>
+                        /
+                        <strong id="totalDocumentCount">{{ candidate_documents|length }}</strong>
+                    </p>
+
+                </div>
+
+                <!-- OVERALL DOCUMENT VERIFICATION -->
+                <div id="overallVerificationSection"
+                     class="border rounded p-3 mt-4
+                     {% if not all_documents_reviewed or overall_is_finalized %}d-none{% endif %}">
+
+                    <h5 class="fw-bold mb-2">
+                        <i class="bi bi-shield-check me-1"></i>
+                        Overall Document Verification
+                    </h5>
+
+                    <p class="text-muted mb-3">
+                        All individual documents have been reviewed.
+                        Make the final verification decision for this candidate.
+                    </p>
+
+                    <div id="overallVerificationMessage"
+                         class="alert d-none"
+                         role="alert"></div>
+
+                    <div id="overallVerificationActions"
+                         class="d-flex flex-wrap gap-2">
+
+                        <form method="POST"
+                              action="{{ url_for('candidates.finalize_document_verification', candidate_id=candidate.id) }}"
+                              class="overall-verification-form">
+
+                            {% if csrf_token is defined %}
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            {% endif %}
+
+                            <input type="hidden" name="decision" value="success">
+
+                            <button type="submit"
+                                    class="btn btn-success"
+                                    id="overallAcceptButton">
+                                <i class="bi bi-check-circle me-1"></i>
+                                Accept All Documents
+                            </button>
+                        </form>
+
+                        <form method="POST"
+                              action="{{ url_for('candidates.finalize_document_verification', candidate_id=candidate.id) }}"
+                              class="overall-verification-form">
+
+                            {% if csrf_token is defined %}
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            {% endif %}
+
+                            <input type="hidden" name="decision" value="rejected">
+
+                            <button type="submit"
+                                    class="btn btn-danger"
+                                    id="overallRejectButton">
+                                <i class="bi bi-x-circle me-1"></i>
+                                Reject Candidate
+                            </button>
+                        </form>
+
+                    </div>
+
+                    <div id="overallVerificationFinalized"
+                         class="alert alert-success d-none mt-3 mb-0">
+                        Overall document verification has been completed.
+                    </div>
+
+                </div>
+
+                {% if overall_is_finalized %}
+
+                    <div class="alert
+                        {% if overall_status|lower in ['accepted', 'success', 'verified'] %}
+                            alert-success
+                        {% else %}
+                            alert-danger
+                        {% endif %}
+                        mt-4 mb-0">
+
+                        <strong>Overall Verification:</strong>
+                        {{ overall_status }}
+
+                        <p class="mb-0 mt-1">
+                            The overall verification decision has already been finalized.
+                        </p>
+                    </div>
+
+                {% endif %}
+
+                <div class="alert alert-info small mt-3 mb-0">
+                    <i class="bi bi-shield-lock me-1"></i>
+                    Each document can be individually accepted or rejected only once.
+                    The overall decision is made after all documents have been reviewed.
+                </div>
+
+            {% else %}
+
+                <div class="text-center py-4">
+                    <i class="bi bi-folder2-open display-5 text-muted"></i>
+
+                    <p class="text-muted mt-2 mb-1">
+                        No candidate documents have been uploaded yet.
+                    </p>
+
+                    <small class="text-muted">
+                        Uploaded documents will appear here after submission.
+                    </small>
+                </div>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- 6. INTERVIEW NOTES -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1">
+                        <i class="bi bi-clipboard-check me-1"></i>
+                        Interview Notes
+                    </h5>
+                    <p class="text-muted mb-0">
+                        Review interview records and recruiter feedback.
+                    </p>
+                </div>
+
+                <span class="badge text-bg-primary">
+                    {{ candidate.interviews|length }} Interview(s)
+                </span>
+            </div>
+
+            {% if candidate.interviews %}
+
+                {% for interview in candidate.interviews %}
+
+                    <div class="border rounded p-3 mb-3">
+
+                        <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
+                            <h6 class="fw-bold mb-0">
+                                Interview #{{ loop.index }}
+                            </h6>
+
+                            <span class="badge text-bg-info">
+                                {{ interview.status or 'Not available' }}
+                            </span>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+
+                            <div class="col-md-6">
+                                <strong>Scheduled Date</strong>
+                                <p>
+                                    {{ interview.scheduled_at.strftime('%d-%m-%Y %I:%M %p')
+                                       if interview.scheduled_at else '-' }}
+                                </p>
+                            </div>
+
+                            <div class="col-md-6">
+                                <strong>Completed Date</strong>
+                                <p>
+                                    {{ interview.completed_at.strftime('%d-%m-%Y %I:%M %p')
+                                       if interview.completed_at else '-' }}
+                                </p>
+                            </div>
+
+                            <div class="col-md-6">
+                                <strong>Interviewer ID</strong>
+                                <p>{{ interview.interviewer_id or '-' }}</p>
+                            </div>
+
+                            <div class="col-md-6">
+                                <strong>Overall Score</strong>
+                                <p>{{ interview.overall_score if interview.overall_score is not none else '-' }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="mb-3">
+                            <strong>Interview Notes</strong>
+                            <div class="bg-light rounded p-3 mt-2 text-break"
+                                 style="white-space: pre-wrap;">{{ interview.notes_raw or 'No interview notes available.' }}</div>
+                        </div>
+
+                        <div>
+                            <strong>Edited Interview Summary</strong>
+                            <div class="bg-light rounded p-3 mt-2 text-break"
+                                 style="white-space: pre-wrap;">{{ interview.summary_edited or 'No edited summary available.' }}</div>
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <div class="text-center py-4">
+                    <i class="bi bi-journal-text display-5 text-muted"></i>
+                    <p class="text-muted mt-2 mb-0">
+                        No interview records available for this candidate.
+                    </p>
+                </div>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- 7. OFFER LETTER WORKFLOW -->
+    {% if candidate.status == 'Selected' %}
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+
+                <h5 class="fw-bold mb-2">
+                    <i class="bi bi-file-earmark-text me-1"></i>
+                    Offer Letter
+                </h5>
+
+                {% if offer_email_already_sent %}
+
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-check-circle me-1"></i>
+                        An offer letter has already been sent to this candidate.
+                    </div>
+
+                {% elif offer_eligible %}
+
+                    <p class="text-muted">
+                        All submitted documents have been accepted.
+                        You can now send the offer letter or reject the candidate.
+                    </p>
+
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Document verification completed. Offer actions are available.
+                    </div>
+
+                    <div class="row g-4">
+
+                        <div class="col-lg-7">
+                            <div class="border rounded p-3 h-100">
+
+                                <h6 class="fw-bold mb-3">
+                                    Send Offer Letter
+                                </h6>
+
+                                <form method="POST"
+                                      action="{{ url_for('candidates.send_candidate_offer', candidate_id=candidate.id) }}"
+                                      id="offerForm">
+
+                                    {% if csrf_token is defined %}
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    {% endif %}
+
+                                    <div class="mb-3">
+                                        <label for="offerSalary" class="form-label">
+                                            Annual Salary
+                                        </label>
+
+                                        <input type="number"
+                                               id="offerSalary"
+                                               name="salary"
+                                               class="form-control"
+                                               min="1"
+                                               step="0.01"
+                                               placeholder="Enter annual salary"
+                                               required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="joiningDate" class="form-label">
+                                            Joining Date
+                                        </label>
+
+                                        <input type="date"
+                                               id="joiningDate"
+                                               name="joining_date"
+                                               class="form-control"
+                                               required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="additionalMessage" class="form-label">
+                                            Additional Message (Optional)
+                                        </label>
+
+                                        <textarea id="additionalMessage"
+                                                  name="additional_message"
+                                                  class="form-control"
+                                                  rows="3"
+                                                  maxlength="2000"
+                                                  placeholder="Enter any additional information for the offer letter"></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-send me-1"></i>
+                                        Send Offer Letter
+                                    </button>
+
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-5">
+                            <div class="border border-danger rounded p-3 h-100">
+
+                                <h6 class="fw-bold text-danger mb-3">
+                                    Reject Candidate
+                                </h6>
+
+                                <p class="text-muted small">
+                                    Rejecting the candidate will close their active
+                                    application. Their recruitment and audit history
+                                    will be retained.
+                                </p>
+
+                                <form method="POST"
+                                      action="{{ url_for('candidates.reject_candidate_offer', candidate_id=candidate.id) }}"
+                                      id="offerRejectForm">
+
+                                    {% if csrf_token is defined %}
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    {% endif %}
+
+                                    <div class="mb-3">
+                                        <label for="offerRejectReason" class="form-label">
+                                            Rejection Reason
+                                        </label>
+
+                                        <textarea id="offerRejectReason"
+                                                  name="reason"
+                                                  class="form-control"
+                                                  rows="4"
+                                                  maxlength="2000"
+                                                  required
+                                                  placeholder="Enter the reason for rejection"></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="bi bi-x-circle me-1"></i>
+                                        Reject Candidate
+                                    </button>
+
+                                </form>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+
+                        <strong>Offer letter is not available yet.</strong>
+
+                        <p class="mb-0 mt-2">
+                            {{ offer_reason or 'All submitted documents must be accepted before an offer can be sent.' }}
+                        </p>
+                    </div>
+
+                {% endif %}
+
+            </div>
+        </div>
+
+    {% endif %}
+
+    <!-- 8. UPDATE RECRUITMENT STATUS -->
+    {% if candidate.status not in terminal_statuses %}
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+
+                <h5 class="fw-bold mb-3">
+                    Update Recruitment Status
+                </h5>
+
+                <p class="text-muted">
+                    Follow the recruitment pipeline. Previous stages cannot
+                    be selected again.
+                </p>
+
+                <form method="POST"
+                      action="{{ url_for('candidates.update_candidate_status', candidate_id=candidate.id) }}">
+
+                    {% if csrf_token is defined %}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Current Status</label>
+
+                        <input type="text"
+                               class="form-control"
+                               value="{{ candidate.status }}"
+                               disabled>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Next Status</label>
+
+                        <select name="status"
+                                id="candidateStatus"
+                                class="form-select"
+                                required>
+
+                            <option value="" selected disabled>
+                                Choose next status
+                            </option>
+
+                            {% if candidate.status == 'On Hold' %}
+
+                                {% if candidate.previous_status %}
+                                    <option value="{{ candidate.previous_status }}">
+                                        Resume: {{ candidate.previous_status }}
+                                    </option>
+                                {% endif %}
+
+                                <option value="Rejected">Rejected</option>
+                                <option value="Closed">Closed</option>
+
+                            {% else %}
+
+                                {% if candidate.status in next_statuses %}
+                                    <option value="{{ next_statuses[candidate.status] }}">
+                                        {{ next_statuses[candidate.status] }}
+                                    </option>
+                                {% endif %}
+
+                                <option value="On Hold">On Hold</option>
+                                <option value="Rejected">Rejected</option>
+                                <option value="Closed">Closed</option>
+
+                            {% endif %}
+
+                        </select>
+                    </div>
+
+                    <div class="mb-3 d-none" id="holdReasonContainer">
+
+                        <label class="form-label">
+                            Reason for placing candidate On Hold
+                        </label>
+
+                        <textarea name="reason"
+                                  id="holdReason"
+                                  class="form-control"
+                                  rows="3"
+                                  maxlength="2000"
+                                  placeholder="Enter the reason for placing this candidate On Hold"></textarea>
+
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-arrow-repeat me-1"></i>
+                        Update Status
+                    </button>
+
+                </form>
+
+            </div>
+        </div>
+
+    {% else %}
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+
+                <h5 class="fw-bold mb-2">
+                    Recruitment Status
+                </h5>
+
+                <div class="alert alert-secondary mb-0">
+                    <i class="bi bi-lock me-1"></i>
+                    This candidate is {{ candidate.status }}.
+                    No further status changes are allowed.
+                </div>
+
+            </div>
+        </div>
+
+    {% endif %}
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* =====================================================
+       COMMON MESSAGE FUNCTION
+    ===================================================== */
+
+    function showAlert(element, message, type) {
+        if (!element) return;
+
+        element.textContent = message;
+        element.className = "alert alert-" + type;
+        element.classList.remove("d-none");
+    }
+
+    /* =====================================================
+       AI RESUME EXTRACTION
+    ===================================================== */
+
+    const extractButton = document.getElementById("extractAiButton");
+    const buttonText = document.getElementById("extractButtonText");
+    const messageBox = document.getElementById("aiMessage");
+    const resultsBox = document.getElementById("aiResults");
+
+    const extractionUrl = extractButton
+        ? extractButton.dataset.extractionUrl
+        : null;
+
+    function renderStructuredValue(container, value) {
+        if (!container) return;
+
+        container.replaceChildren();
+
+        if (value === null || value === undefined || value === "") {
+            container.textContent = "Not available.";
+            return;
+        }
+
+        if (Array.isArray(value)) {
+            if (value.length === 0) {
+                container.textContent = "No details available.";
+                return;
+            }
+
+            const list = document.createElement("ul");
+            list.className = "mb-0 ps-3";
+
+            value.forEach(function (item) {
+                const listItem = document.createElement("li");
+                listItem.className = "mb-2";
+
+                renderStructuredValue(listItem, item);
+                list.appendChild(listItem);
+            });
+
+            container.appendChild(list);
+            return;
+        }
+
+        if (typeof value === "object") {
+            const entries = Object.entries(value);
+
+            if (entries.length === 0) {
+                container.textContent = "No details available.";
+                return;
+            }
+
+            const list = document.createElement("dl");
+            list.className = "row mb-0";
+
+            entries.forEach(function ([key, item]) {
+                const term = document.createElement("dt");
+                term.className = "col-md-3 text-capitalize";
+                term.textContent = key.replace(/_/g, " ");
+
+                const description = document.createElement("dd");
+                description.className = "col-md-9";
+
+                renderStructuredValue(description, item);
+
+                list.appendChild(term);
+                list.appendChild(description);
+            });
+
+            container.appendChild(list);
+            return;
+        }
+
+        container.textContent = String(value);
+    }
+
+    function displayValue(id, value) {
+        const element = document.getElementById(id);
+
+        if (!element) return;
+
+        if (value === null || value === undefined || value === "") {
+            element.textContent = "-";
+        } else if (typeof value === "object") {
+            renderStructuredValue(element, value);
+        } else {
+            element.textContent = String(value);
+        }
+    }
+
+    function displaySkills(skills) {
+        const skillsBox = document.getElementById("aiSkills");
+
+        if (!skillsBox) return;
+
+        skillsBox.replaceChildren();
+
+        let skillList = [];
+
+        if (Array.isArray(skills)) {
+            skillList = skills;
+        } else if (typeof skills === "string" && skills.trim()) {
+            skillList = skills.split(",");
+        } else if (skills && typeof skills === "object") {
+            renderStructuredValue(skillsBox, skills);
+            return;
+        }
+
+        if (skillList.length === 0) {
+            skillsBox.textContent = "No skills extracted.";
+            return;
+        }
+
+        skillList.forEach(function (skill) {
+            const badge = document.createElement("span");
+            badge.className = "badge text-bg-primary me-1 mb-1";
+
+            if (skill && typeof skill === "object") {
+                badge.textContent = Object.values(skill).map(String).join(" - ");
+            } else {
+                badge.textContent = String(skill).trim();
+            }
+
+            skillsBox.appendChild(badge);
+        });
+    }
+
+    function displayProfile(profile) {
+        displayValue("aiName", profile.full_name);
+        displayValue("aiEmail", profile.email);
+        displayValue("aiPhone", profile.phone);
+        displayValue("aiLocation", profile.location);
+        displayValue("aiSummary", profile.summary);
+
+        displaySkills(profile.skills);
+
+        renderStructuredValue(
+            document.getElementById("aiEducation"),
+            profile.education
+        );
+
+        renderStructuredValue(
+            document.getElementById("aiExperience"),
+            profile.experience
+        );
+
+        renderStructuredValue(
+            document.getElementById("aiProjects"),
+            profile.projects
+        );
+
+        renderStructuredValue(
+            document.getElementById("aiCertifications"),
+            profile.certifications
+        );
+
+        document.getElementById("confirmName").value =
+            profile.full_name || "";
+
+        document.getElementById("confirmEmail").value =
+            profile.email || "";
+
+        document.getElementById("confirmPhone").value =
+            profile.phone || "";
+
+        resultsBox.classList.remove("d-none");
+    }
+
+    if (extractButton) {
+        extractButton.addEventListener("click", async function () {
+
+            extractButton.disabled = true;
+            buttonText.textContent = "Extracting...";
+
+            messageBox.classList.add("d-none");
+
+            try {
+                const response = await fetch(extractionUrl, {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json"
+                    },
+                    credentials: "same-origin"
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        result.error || "AI extraction failed."
+                    );
+                }
+
+                if (!result.extracted_profile) {
+                    throw new Error(
+                        "AI did not return candidate information."
+                    );
+                }
+
+                displayProfile(result.extracted_profile);
+
+                showAlert(
+                    messageBox,
+                    result.message || "Resume extraction completed successfully.",
+                    "success"
+                );
+
+            } catch (error) {
+                showAlert(
+                    messageBox,
+                    error.message || "Could not connect to the AI service.",
+                    "danger"
+                );
+            } finally {
+                extractButton.disabled = false;
+
+                buttonText.innerHTML =
+                    '<i class="bi bi-stars me-1"></i> Extract with AI';
+            }
+        });
+    }
+
+    /* =====================================================
+       RESUME SKILL EVIDENCE MAPPING
+    ===================================================== */
+
+    const mapEvidenceButton = document.getElementById(
+        "mapEvidenceButton"
+    );
+
+    const evidenceMessage = document.getElementById(
+        "evidenceMessage"
+    );
+
+    const evidenceResults = document.getElementById(
+        "evidenceResults"
+    );
+
+    const evidenceTableBody = document.getElementById(
+        "evidenceTableBody"
+    );
+
+    const evidenceEmptyState = document.getElementById(
+        "evidenceEmptyState"
+    );
+
+    const evidenceTableContainer = document.getElementById(
+        "evidenceTableContainer"
+    );
+
+    function createEvidenceCell(value) {
+        const cell = document.createElement("td");
+        cell.textContent = value || "-";
+        return cell;
+    }
+
+    function getEvidenceStatusBadge(statusValue) {
+        const badge = document.createElement("span");
+
+        const status = String(statusValue || "uncertain")
+            .toLowerCase()
+            .replace(/_/g, " ")
+            .trim();
+
+        if (status === "evidence found") {
+            badge.className = "badge text-bg-success";
+            badge.textContent = "Evidence Found";
+
+        } else if (status === "not found") {
+            badge.className = "badge text-bg-danger";
+            badge.textContent = "Not Found";
+
+        } else {
+            badge.className = "badge text-bg-warning";
+            badge.textContent = "Uncertain";
+        }
+
+        return badge;
+    }
+
+    function renderEvidenceResults(evidenceItems) {
+        if (!evidenceTableBody) return;
+
+        evidenceTableBody.replaceChildren();
+
+        evidenceItems.forEach(function (item) {
+
+            const row = document.createElement("tr");
+
+            const skillCell = createEvidenceCell(item.skill || "-");
+
+            const excerptCell = createEvidenceCell(
+                item.excerpt || "No supporting evidence available."
+            );
+
+            excerptCell.classList.add("text-break");
+
+            const pageCell = createEvidenceCell(
+                item.source_page !== null &&
+                item.source_page !== undefined &&
+                item.source_page !== ""
+                    ? String(item.source_page)
+                    : "-"
+            );
+
+            const statusCell = document.createElement("td");
+
+            // The API returns the stored evidence_status field.
+            statusCell.appendChild(
+                getEvidenceStatusBadge(item.evidence_status)
+            );
+
+            row.appendChild(skillCell);
+            row.appendChild(excerptCell);
+            row.appendChild(pageCell);
+            row.appendChild(statusCell);
+
+            evidenceTableBody.appendChild(row);
+        });
+
+        if (evidenceEmptyState) {
+            evidenceEmptyState.classList.add("d-none");
+        }
+
+        if (evidenceTableContainer) {
+            evidenceTableContainer.classList.remove("d-none");
+        }
+
+        const existingTable = document.getElementById("evidenceTable");
+
+        if (existingTable) {
+            existingTable.classList.remove("d-none");
+        }
+
+        evidenceResults.classList.remove("d-none");
+    }
+
+    if (mapEvidenceButton) {
+
+        mapEvidenceButton.addEventListener("click", async function () {
+
+            const evidenceUrl = mapEvidenceButton.dataset.evidenceUrl;
+
+            const originalButtonText = mapEvidenceButton.innerHTML;
+
+            mapEvidenceButton.disabled = true;
+
+            mapEvidenceButton.innerHTML =
+                '<span class="spinner-border spinner-border-sm me-1"></span> Mapping...';
+
+            evidenceMessage.classList.add("d-none");
+
+            try {
+
+                const response = await fetch(evidenceUrl, {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    credentials: "same-origin"
+                });
+
+                let result;
+
+                try {
+                    result = await response.json();
+                } catch {
+                    throw new Error(
+                        "The server returned an invalid response. Check the Flask terminal."
+                    );
+                }
+
+                if (!response.ok) {
+                    throw new Error(
+                        result.error ||
+                        result.message ||
+                        "Skill evidence mapping failed."
+                    );
+                }
+
+                if (!Array.isArray(result.evidence)) {
+                    throw new Error(
+                        "The evidence response does not contain a valid evidence list."
+                    );
+                }
+
+                renderEvidenceResults(result.evidence);
+
+                showAlert(
+                    evidenceMessage,
+                    result.message ||
+                    "Skill evidence mapping completed successfully.",
+                    "success"
+                );
+
+            } catch (error) {
+
+                showAlert(
+                    evidenceMessage,
+                    error.message || "Could not map resume skill evidence.",
+                    "danger"
+                );
+
+            } finally {
+
+                mapEvidenceButton.disabled = false;
+                mapEvidenceButton.innerHTML = originalButtonText;
+
+            }
+
+        });
+    }
+
+    /* =====================================================
+       DOCUMENT REVIEW PROGRESS
+    ===================================================== */
+
+    const documentRows = document.querySelectorAll(
+        "#candidateDocumentsTable tbody tr[data-document-id]"
+    );
+
+    const totalDocumentCount = documentRows.length;
+
+    const reviewedCountElement = document.getElementById(
+        "reviewedDocumentCount"
+    );
+
+    const progressBar = document.getElementById(
+        "documentProgressBar"
+    );
+
+    const progressText = document.getElementById(
+        "documentProgressText"
+    );
+
+    const overallSection = document.getElementById(
+        "overallVerificationSection"
+    );
+
+    const verificationMessage = document.getElementById(
+        "documentVerificationMessage"
+    );
+
+    const overallMessage = document.getElementById(
+        "overallVerificationMessage"
+    );
+
+    function updateDocumentProgress() {
+
+        let reviewedCount = 0;
+        let acceptedCount = 0;
+        let rejectedCount = 0;
+
+        documentRows.forEach(function (row) {
+
+            const badge = row.querySelector(".document-status-badge");
+
+            const status = badge
+                ? badge.textContent.trim().toLowerCase()
+                : "";
+
+            if (
+                status === "accepted" ||
+                status === "verified" ||
+                status === "rejected"
+            ) {
+                reviewedCount++;
+            }
+
+            if (status === "accepted" || status === "verified") {
+                acceptedCount++;
+            }
+
+            if (status === "rejected") {
+                rejectedCount++;
+            }
+        });
+
+        if (reviewedCountElement) {
+            reviewedCountElement.textContent = reviewedCount;
+        }
+
+        const percentage = totalDocumentCount > 0
+            ? Math.round((reviewedCount / totalDocumentCount) * 100)
+            : 0;
+
+        if (progressBar) {
+            progressBar.style.width = percentage + "%";
+            progressBar.setAttribute("aria-valuenow", percentage);
+        }
+
+        if (progressText) {
+            progressText.textContent =
+                reviewedCount === totalDocumentCount
+                    ? "All documents reviewed."
+                    : "Review all submitted documents.";
+        }
+
+        if (
+            overallSection &&
+            reviewedCount === totalDocumentCount &&
+            totalDocumentCount > 0
+        ) {
+            overallSection.classList.remove("d-none");
+        }
+
+        const acceptButton = document.getElementById(
+            "overallAcceptButton"
+        );
+
+        if (acceptButton) {
+            acceptButton.disabled =
+                reviewedCount !== totalDocumentCount ||
+                acceptedCount !== totalDocumentCount;
+        }
+
+        return {
+            reviewedCount: reviewedCount,
+            acceptedCount: acceptedCount,
+            rejectedCount: rejectedCount,
+            totalCount: totalDocumentCount,
+            allReviewed: totalDocumentCount > 0 &&
+                reviewedCount === totalDocumentCount
+        };
+    }
+
+    updateDocumentProgress();
+
+    /* =====================================================
+       INDIVIDUAL DOCUMENT ACCEPT / REJECT - AJAX
+    ===================================================== */
+
+    document.querySelectorAll(".document-verification-form").forEach(
+        function (form) {
+
+            const remarksField = form.querySelector(
+                ".verification-remarks"
+            );
+
+            if (remarksField) {
+                remarksField.addEventListener("input", function () {
+                    remarksField.setCustomValidity("");
+                });
+            }
+
+            form.addEventListener("submit", async function (event) {
+
+                event.preventDefault();
+
+                const submitButton = event.submitter;
+
+                if (!submitButton) return;
+
+                const decision = submitButton.dataset.decision || "";
+
+                const remarks = remarksField
+                    ? remarksField.value.trim()
+                    : "";
+
+                if (decision === "Rejected" && !remarks) {
+
+                    remarksField.setCustomValidity(
+                        "Please enter remarks explaining why this document is rejected."
+                    );
+
+                    remarksField.reportValidity();
+                    remarksField.focus();
+
+                    return;
+                }
+
+                if (remarksField) {
+                    remarksField.setCustomValidity("");
+                }
+
+                const confirmed = window.confirm(
+                    decision === "Accepted"
+                        ? "Are you sure you want to accept this document?"
+                        : "Are you sure you want to reject this document?"
+                );
+
+                if (!confirmed) return;
+
+                const documentId = form.dataset.documentId;
+
+                const documentRow = document.getElementById(
+                    "document-row-" + documentId
+                );
+
+                const verificationRow = document.getElementById(
+                    "verification-row-" + documentId
+                );
+
+                const statusCell = documentRow
+                    ? documentRow.querySelector(".document-status-badge")
+                    : null;
+
+                const remarksCell = documentRow
+                    ? documentRow.querySelector(".document-remarks")
+                    : null;
+
+                const buttons = form.querySelectorAll(
+                    "button[type='submit']"
+                );
+
+                const originalButtonText = submitButton.innerHTML;
+
+                buttons.forEach(function (button) {
+                    button.disabled = true;
+                });
+
+                submitButton.innerHTML =
+                    '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+
+                verificationMessage.classList.add("d-none");
+
+                try {
+
+                    const formData = new FormData(form);
+
+                    formData.set("decision", decision);
+
+                    const response = await fetch(form.action, {
+                        method: "POST",
+                        body: formData,
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest",
+                            "Accept": "application/json"
+                        },
+                        credentials: "same-origin"
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok || result.success === false) {
+                        throw new Error(
+                            result.message ||
+                            result.error ||
+                            "Document verification failed."
+                        );
+                    }
+
+                    const finalDecision = String(
+                        result.decision || decision
+                    ).toLowerCase();
+
+                    const accepted = [
+                        "accepted",
+                        "verified"
+                    ].includes(finalDecision);
+
+                    const displayedDecision = accepted
+                        ? "Accepted"
+                        : "Rejected";
+
+                    if (statusCell) {
+
+                        const badge = document.createElement("span");
+
+                        badge.className = accepted
+                            ? "badge text-bg-success"
+                            : "badge text-bg-danger";
+
+                        badge.textContent = displayedDecision;
+
+                        statusCell.replaceChildren(badge);
+                    }
+
+                    if (remarksCell) {
+                        remarksCell.textContent =
+                            remarks || "No remarks provided.";
+                    }
+
+                    if (verificationRow) {
+                        verificationRow.remove();
+                    }
+
+                    showAlert(
+                        verificationMessage,
+                        result.message ||
+                        "Document " + displayedDecision.toLowerCase() +
+                        " successfully.",
+                        "success"
+                    );
+
+                    const progress = updateDocumentProgress();
+
+                    if (progress.allReviewed) {
+
+                        showAlert(
+                            overallMessage,
+                            "All documents have been reviewed. You can now make the overall verification decision.",
+                            "info"
+                        );
+
+                        if (progress.rejectedCount > 0) {
+
+                            const acceptButton = document.getElementById(
+                                "overallAcceptButton"
+                            );
+
+                            if (acceptButton) {
+                                acceptButton.disabled = true;
+                            }
+                        }
+                    }
+
+                } catch (error) {
+
+                    showAlert(
+                        verificationMessage,
+                        error.message || "Could not verify the document.",
+                        "danger"
+                    );
+
+                    buttons.forEach(function (button) {
+                        button.disabled = false;
+                    });
+
+                    submitButton.innerHTML = originalButtonText;
+                }
+            });
+        }
+    );
+
+    /* =====================================================
+       OVERALL VERIFICATION CONFIRMATION
+    ===================================================== */
+
+    document.querySelectorAll(".overall-verification-form").forEach(
+        function (form) {
+
+            form.addEventListener("submit", function (event) {
+
+                const decisionField = form.querySelector(
+                    "input[name='decision']"
+                );
+
+                const decision = decisionField
+                    ? decisionField.value
+                    : "";
+
+                const progress = updateDocumentProgress();
+
+                if (!progress.allReviewed) {
+
+                    event.preventDefault();
+
+                    showAlert(
+                        overallMessage,
+                        "Please review every document before making the overall decision.",
+                        "warning"
+                    );
+
+                    return;
+                }
+
+                if (
+                    decision === "success" &&
+                    progress.acceptedCount !== progress.totalCount
+                ) {
+
+                    event.preventDefault();
+
+                    showAlert(
+                        overallMessage,
+                        "You can accept the candidate only when every document has been accepted.",
+                        "warning"
+                    );
+
+                    return;
+                }
+
+                if (
+                    decision === "rejected" &&
+                    progress.rejectedCount === 0
+                ) {
+
+                    event.preventDefault();
+
+                    showAlert(
+                        overallMessage,
+                        "At least one document must be rejected before rejecting the candidate through overall verification.",
+                        "warning"
+                    );
+
+                    return;
+                }
+
+                const confirmed = window.confirm(
+                    decision === "success"
+                        ? "Confirm that all documents are accepted and finalize verification?"
+                        : "Are you sure you want to reject this candidate? A rejection notification will be sent."
+                );
+
+                if (!confirmed) {
+                    event.preventDefault();
+                    return;
+                }
+
+                const button = form.querySelector(
+                    "button[type='submit']"
+                );
+
+                if (button) {
+                    button.disabled = true;
+
+                    button.innerHTML =
+                        '<span class="spinner-border spinner-border-sm me-1"></span> Processing...';
+                }
+            });
+        }
+    );
+
+    /* =====================================================
+       OFFER LETTER CONFIRMATION
+    ===================================================== */
+
+    const offerForm = document.getElementById("offerForm");
+
+    if (offerForm) {
+
+        offerForm.addEventListener("submit", function (event) {
+
+            if (!window.confirm(
+                "Are you sure you want to send the Mitraz offer letter to this candidate?"
+            )) {
+                event.preventDefault();
+            }
+        });
+    }
+
+    /* =====================================================
+       OFFER REJECTION CONFIRMATION
+    ===================================================== */
+
+    const offerRejectForm = document.getElementById(
+        "offerRejectForm"
+    );
+
+    if (offerRejectForm) {
+
+        offerRejectForm.addEventListener("submit", function (event) {
+
+            const confirmed = window.confirm(
+                "Are you sure you want to reject this candidate? This action cannot be undone."
+            );
+
+            if (!confirmed) {
+                event.preventDefault();
+            }
+        });
+    }
+
+    /* =====================================================
+       ON HOLD REASON FIELD
+    ===================================================== */
+
+    const statusSelect = document.getElementById(
+        "candidateStatus"
+    );
+
+    const holdContainer = document.getElementById(
+        "holdReasonContainer"
+    );
+
+    const holdReason = document.getElementById(
+        "holdReason"
+    );
+
+    function updateHoldReason() {
+
+        if (!statusSelect || !holdContainer || !holdReason) {
+            return;
+        }
+
+        if (statusSelect.value === "On Hold") {
+
+            holdContainer.classList.remove("d-none");
+            holdReason.required = true;
+
+        } else {
+
+            holdContainer.classList.add("d-none");
+            holdReason.required = false;
+            holdReason.value = "";
+        }
+    }
+
+    if (statusSelect) {
+        statusSelect.addEventListener("change", updateHoldReason);
+        updateHoldReason();
+    }
+
+});
+</script>
+
+{% endblock %}

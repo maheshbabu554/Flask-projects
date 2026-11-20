@@ -1,0 +1,334 @@
+
+{% extends "base.html" %}
+
+{% block title %}Dashboard | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- Dashboard Header -->
+    <div class="mb-4">
+        <h2 class="fw-semibold mb-1">Dashboard</h2>
+        <p class="text-muted mb-0">
+            Welcome back, {{ current_user.full_name }}.
+            Here's your recruitment overview.
+        </p>
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- STATISTICS CARDS -->
+    <!-- ================================================= -->
+
+    <div class="row g-3 mb-4">
+
+        <!-- Vacancies -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 h-100"
+                 style="background-color: #e8f1fc; border-radius: 14px;">
+
+                <div class="card-body p-4">
+
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-briefcase text-primary"></i>
+                        <span class="text-dark">
+                            Total Vacancies
+                        </span>
+                    </div>
+
+                    <h2 class="fw-bold mb-0">
+                        {{ total_vacancies }}
+                    </h2>
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Candidates -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 h-100"
+                 style="background-color: #e8f1fc; border-radius: 14px;">
+
+                <div class="card-body p-4">
+
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-people text-primary"></i>
+                        <span class="text-dark">
+                            Total Candidates
+                        </span>
+                    </div>
+
+                    <h2 class="fw-bold mb-0">
+                        {{ total_candidates }}
+                    </h2>
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Upcoming Interviews -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 h-100"
+                 style="background-color: #e8f1fc; border-radius: 14px;">
+
+                <div class="card-body p-4">
+
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-calendar-event text-primary"></i>
+                        <span class="text-dark">
+                            Upcoming Interviews
+                        </span>
+                    </div>
+
+                    <h2 class="fw-bold mb-0">
+                        {{ upcoming_interviews|length }}
+                    </h2>
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Pending Follow-ups -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 h-100"
+                 style="background-color: #e8f1fc; border-radius: 14px;">
+
+                <div class="card-body p-4">
+
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-hourglass-split text-primary"></i>
+                        <span class="text-dark">
+                            Pending Follow-ups
+                        </span>
+                    </div>
+
+                    <h2 class="fw-bold mb-0">
+                        {{ pending_followups }}
+                    </h2>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- PIPELINE AND UPCOMING INTERVIEWS -->
+    <!-- ================================================= -->
+
+    <div class="row g-3 mb-3">
+
+        <!-- Candidate Pipeline -->
+        <div class="col-12 col-xl-6">
+
+            <div class="card h-100 shadow-sm"
+                 style="border: 1px solid #dce6f2; border-radius: 15px;">
+
+                <div class="card-body p-4">
+
+                    <h5 class="fw-semibold mb-4">
+                        Candidates by Pipeline Stage
+                    </h5>
+
+                    {% for stage in pipeline_stages %}
+
+                        {% set count = stage_counts.get(stage, 0) %}
+
+                        {% set percentage = (
+                            (count / total_candidates * 100)
+                            if total_candidates > 0 else 0
+                        ) %}
+
+                        <div class="mb-3">
+
+                            <div class="d-flex justify-content-between mb-1">
+
+                                <span>{{ stage }}</span>
+
+                                <strong>{{ count }}</strong>
+
+                            </div>
+
+                            <div class="progress"
+                                 style="height: 7px; border-radius: 10px;">
+
+                                <div
+                                    class="progress-bar bg-primary pipeline-progress"
+                                    role="progressbar"
+                                    data-progress="{{ percentage }}"
+                                    aria-valuenow="{{ percentage }}"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                    aria-label="{{ stage }} candidates"
+                                ></div>
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- Upcoming Interviews -->
+        <div class="col-12 col-xl-6">
+
+            <div class="card h-100 shadow-sm"
+                 style="border: 1px solid #dce6f2; border-radius: 15px;">
+
+                <div class="card-body p-4">
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+
+                        <h5 class="fw-semibold mb-0">
+                            Upcoming Interviews
+                        </h5>
+
+                        <a href="{{ url_for('interviews.interview_list') }}"
+                           class="small text-decoration-none">
+                            View All
+                        </a>
+
+                    </div>
+
+                    {% for interview in upcoming_interviews %}
+
+                        <div class="border-bottom py-3">
+
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+
+                                <div>
+
+                                    <div class="fw-semibold">
+
+                                        {{ interview.candidate.full_name
+                                           if interview.candidate
+                                           else 'Candidate' }}
+
+                                    </div>
+
+                                    <small class="text-muted">
+
+                                        {{ interview.candidate.vacancy.title
+                                           if interview.candidate and interview.candidate.vacancy
+                                           else 'Vacancy not available' }}
+
+                                    </small>
+
+                                </div>
+
+                                <div class="text-end">
+
+                                    <div class="small fw-semibold">
+
+                                        {{ interview.scheduled_at.strftime('%a %d %b')
+                                           if interview.scheduled_at
+                                           else 'Not scheduled' }}
+
+                                    </div>
+
+                                    <small class="text-muted">
+
+                                        {{ interview.scheduled_at.strftime('%I:%M %p')
+                                           if interview.scheduled_at
+                                           else '' }}
+
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+                            <div class="mt-2">
+
+                                <a
+                                    href="{{ url_for(
+                                        'interviews.interview_detail',
+                                        interview_id=interview.id
+                                    ) }}"
+                                    class="small text-decoration-none"
+                                >
+                                    Open interview
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="text-center py-5">
+
+                            <i class="bi bi-calendar-x display-5 text-muted"></i>
+
+                            <p class="text-muted mt-3 mb-0">
+                                No upcoming interviews scheduled.
+                            </p>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ================================================= -->
+    <!-- RECRUITMENT POLICY -->
+    <!-- ================================================= -->
+
+    <div class="alert alert-info border-0 mt-3 mb-0">
+
+        <i class="bi bi-shield-check me-2"></i>
+
+        <strong>Human-led recruitment:</strong>
+
+        AI supports resume understanding and interview preparation.
+        Recruiters make all candidate decisions.
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- DYNAMIC PIPELINE PROGRESS BARS -->
+<!-- ===================================================== -->
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const progressBars = document.querySelectorAll(
+        ".pipeline-progress"
+    );
+
+    progressBars.forEach(function (bar) {
+
+        const percentage = Number(bar.dataset.progress) || 0;
+
+        const safePercentage = Math.min(
+            100,
+            Math.max(0, percentage)
+        );
+
+        bar.style.width = safePercentage + "%";
+
+    });
+
+});
+</script>
+
+{% endblock %}

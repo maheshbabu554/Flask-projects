@@ -1,0 +1,150 @@
+
+{% extends "base.html" %}
+
+{% block title %}Offer Letter Preview | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="mb-4">
+        <h2 class="fw-bold">Offer Letter Draft</h2>
+        <p class="text-muted">
+            Review the offer details before sending them to the candidate.
+        </p>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-3">Candidate Information</h5>
+
+            <div class="mb-3">
+                <label class="form-label">Candidate Name</label>
+                <input
+                    type="text"
+                    class="form-control"
+                    value="{{ candidate.full_name }}"
+                    readonly
+                >
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Candidate Email</label>
+                <input
+                    type="email"
+                    class="form-control"
+                    value="{{ candidate.email }}"
+                    readonly
+                >
+            </div>
+
+            <hr>
+
+            <h5 class="fw-bold mb-3">Offer Details</h5>
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'offer_letters.send_offer_letter',
+                    candidate_id=candidate.id
+                ) }}"
+            >
+
+                <div class="mb-3">
+                    <label class="form-label">Job Title</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        value="{{ candidate.vacancy.title }}"
+                        readonly
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Annual Salary / CTC</label>
+                    <input
+                        type="text"
+                        name="salary"
+                        class="form-control"
+                        placeholder="Example: 5 LPA"
+                        maxlength="100"
+                        required
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Expected Joining Date</label>
+                    <input
+                        type="date"
+                        name="joining_date"
+                        class="form-control"
+                        required
+                    >
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">
+                        Additional Message
+                    </label>
+                    <textarea
+                        name="offer_message"
+                        class="form-control"
+                        rows="4"
+                        maxlength="2000"
+                        placeholder="Enter additional offer information (optional)"
+                    ></textarea>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-success"
+                        onclick="return confirm('Are you sure you want to send this offer letter to the candidate?');"
+                    >
+                        Send Offer Letter
+                    </button>
+
+                    <a
+                        href="{{ url_for(
+                            'candidates.candidate_detail',
+                            candidate_id=candidate.id
+                        ) }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+            <hr class="my-4">
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'offer_letters.reject_candidate',
+                    candidate_id=candidate.id
+                ) }}"
+                onsubmit="return confirm('Are you sure you want to reject this candidate? This action will archive the candidate.');"
+            >
+                <label for="rejection_reason" class="form-label">Rejection reason</label>
+                <textarea id="rejection_reason" name="reason" class="form-control mb-3" rows="2" maxlength="1000" required placeholder="Record why this candidate is being rejected"></textarea>
+
+                <button
+                    type="submit"
+                    class="btn btn-outline-danger"
+                >
+                    Reject Candidate
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

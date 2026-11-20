@@ -1,0 +1,166 @@
+
+{% extends "base.html" %}
+
+{% block title %}Recruiter Requests | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <div class="mb-4">
+        <h2 class="fw-bold">Recruiter Registration Requests</h2>
+        <p class="text-muted">
+            Review and manage recruiter account requests.
+        </p>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+
+            {% if account_requests %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Requested Role</th>
+                                <th>Submitted</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for account_request in account_requests %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ account_request.full_name }}
+                                    </td>
+
+                                    <td>
+                                        {{ account_request.email }}
+                                    </td>
+
+                                    <td>
+                                        {{ account_request.requested_role }}
+                                    </td>
+
+                                    <td>
+                                        {{ account_request.created_at.strftime('%d-%m-%Y') if account_request.created_at else '-' }}
+                                    </td>
+
+                                    <td>
+                                        {% if account_request.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">
+                                                Pending
+                                            </span>
+                                        {% elif account_request.status == 'approved' %}
+                                            <span class="badge bg-success">
+                                                Approved
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                Rejected
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+
+                                        {% if account_request.status == 'pending' %}
+
+                                            <div class="d-flex flex-wrap gap-2">
+
+                                                <form
+                                                    method="POST"
+                                                    action="{{ url_for(
+                                                        'admin.review_request',
+                                                        request_id=account_request.id
+                                                    ) }}"
+                                                >
+
+                                                    <input
+                                                        type="hidden"
+                                                        name="decision"
+                                                        value="approved"
+                                                    >
+
+                                                    <button
+                                                        type="submit"
+                                                        class="btn btn-sm btn-success"
+                                                        onclick="return confirm('Approve this recruiter request?');"
+                                                    >
+                                                        Approve
+                                                    </button>
+
+                                                </form>
+
+                                                <form
+                                                    method="POST"
+                                                    action="{{ url_for(
+                                                        'admin.review_request',
+                                                        request_id=account_request.id
+                                                    ) }}"
+                                                >
+
+                                                    <input
+                                                        type="hidden"
+                                                        name="decision"
+                                                        value="rejected"
+                                                    >
+
+                                                    <button
+                                                        type="submit"
+                                                        class="btn btn-sm btn-danger"
+                                                        onclick="return confirm('Reject this recruiter request?');"
+                                                    >
+                                                        Reject
+                                                    </button>
+
+                                                </form>
+
+                                            </div>
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+                                                No actions available
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="text-center py-5">
+                    <h5 class="text-muted">
+                        No recruiter registration requests found.
+                    </h5>
+                </div>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

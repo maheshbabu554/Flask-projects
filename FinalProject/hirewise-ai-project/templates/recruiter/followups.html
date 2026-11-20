@@ -1,0 +1,490 @@
+
+{% extends "base.html" %}
+
+{% block title %}Follow-ups | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+
+        <div>
+            <h2 class="fw-bold">Candidate Follow-ups</h2>
+            <p class="text-muted mb-0">
+                Manage candidate communication and upcoming recruitment actions.
+            </p>
+        </div>
+
+        <a
+            href="{{ url_for('followups.select_candidate_for_followup') }}"
+            class="btn btn-primary"
+        >
+            <i class="bi bi-plus-lg me-1"></i>
+            Add Follow-up
+        </a>
+
+    </div>
+
+    <!-- Follow-up Table -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body">
+
+            {% if followups %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Candidate</th>
+                                <th>Action</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Communication</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for followup in followups %}
+
+                                <tr>
+
+                                    <td>{{ loop.index }}</td>
+
+                                    <td>
+                                        <span class="fw-semibold">
+                                            {{ followup.candidate.full_name if followup.candidate else '-' }}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        {{ followup.action_text }}
+                                    </td>
+
+                                    <td>
+                                        {{ followup.due_date.strftime('%d-%m-%Y') if followup.due_date else '-' }}
+                                    </td>
+
+                                    <!-- Status -->
+                                    <td>
+
+                                        {% if followup.done %}
+
+                                            <span class="badge bg-success">
+                                                Completed
+                                            </span>
+
+                                        {% elif followup.due_date and followup.due_date.date() < today %}
+
+                                            <span class="badge bg-danger">
+                                                Overdue
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="badge bg-warning text-dark">
+                                                Pending
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <!-- Communication Summary -->
+                                    <td>
+
+                                        {% if followup.done %}
+
+                                            <div class="small">
+
+                                                <div>
+                                                    <strong>Method:</strong>
+                                                    {{ followup.contact_method or 'Not recorded' }}
+                                                </div>
+
+                                                <div>
+                                                    <strong>Outcome:</strong>
+                                                    {{ followup.outcome or 'Not recorded' }}
+                                                </div>
+
+                                                {% if followup.completed_at %}
+                                                    <div class="text-muted">
+                                                        {{ followup.completed_at.strftime('%d-%m-%Y %I:%M %p') }}
+                                                    </div>
+                                                {% endif %}
+
+                                            </div>
+
+                                        {% else %}
+
+                                            <span class="text-muted small">
+                                                Not completed
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <!-- Actions -->
+                                    <td>
+
+                                        <div class="d-flex flex-wrap gap-2">
+
+                                            {% if followup.done %}
+
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-outline-primary btn-sm"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#details{{ followup.id }}"
+                                                >
+                                                    View Details
+                                                </button>
+
+                                                <form
+                                                    method="POST"
+                                                    action="{{ url_for('followups.reopen_followup', followup_id=followup.id) }}"
+                                                >
+                                                    <button
+                                                        type="submit"
+                                                        class="btn btn-outline-warning btn-sm"
+                                                    >
+                                                        Reopen
+                                                    </button>
+                                                </form>
+
+                                            {% else %}
+
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-success btn-sm"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#complete{{ followup.id }}"
+                                                >
+                                                    <i class="bi bi-chat-dots me-1"></i>
+                                                    Record Communication
+                                                </button>
+
+                                            {% endif %}
+
+                                            <form
+                                                method="POST"
+                                                action="{{ url_for('followups.delete_followup', followup_id=followup.id) }}"
+                                                onsubmit="return confirm('Are you sure you want to permanently delete this follow-up?');"
+                                            >
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-outline-danger btn-sm"
+                                                >
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                                <!-- Communication Form -->
+                                {% if not followup.done %}
+
+                                    <tr class="collapse" id="complete{{ followup.id }}">
+
+                                        <td colspan="7">
+
+                                            <div class="card border bg-light my-2">
+
+                                                <div class="card-body">
+
+                                                    <h5 class="fw-bold mb-1">
+                                                        Record Candidate Communication
+                                                    </h5>
+
+                                                    <p class="text-muted small mb-3">
+                                                        Candidate:
+                                                        {{ followup.candidate.full_name if followup.candidate else '-' }}
+                                                    </p>
+
+                                                    <form
+                                                        method="POST"
+                                                        action="{{ url_for('followups.complete_followup', followup_id=followup.id) }}"
+                                                    >
+
+                                                        <div class="row g-3">
+
+                                                            <!-- Contact Method -->
+                                                            <div class="col-md-6">
+
+                                                                <label class="form-label fw-semibold">
+                                                                    Contact Method
+                                                                    <span class="text-danger">*</span>
+                                                                </label>
+
+                                                                <select
+                                                                    name="contact_method"
+                                                                    class="form-select"
+                                                                    required
+                                                                >
+                                                                    <option value="">Select contact method</option>
+                                                                    <option value="Call">Phone Call</option>
+                                                                    <option value="Email">Email</option>
+                                                                    <option value="WhatsApp">WhatsApp</option>
+                                                                    <option value="Meeting">Meeting</option>
+                                                                    <option value="Other">Other</option>
+                                                                </select>
+
+                                                            </div>
+
+                                                            <!-- Outcome -->
+                                                            <div class="col-md-6">
+
+                                                                <label class="form-label fw-semibold">
+                                                                    Communication Outcome
+                                                                    <span class="text-danger">*</span>
+                                                                </label>
+
+                                                                <select
+                                                                    name="outcome"
+                                                                    class="form-select"
+                                                                    required
+                                                                >
+                                                                    <option value="">Select outcome</option>
+                                                                    <option value="Candidate Responded">Candidate Responded</option>
+                                                                    <option value="No Answer">No Answer</option>
+                                                                    <option value="Requested Callback">Requested Callback</option>
+                                                                    <option value="Interested">Interested</option>
+                                                                    <option value="Not Interested">Not Interested</option>
+                                                                    <option value="Documents Pending">Documents Pending</option>
+                                                                    <option value="Interview Confirmation Pending">Interview Confirmation Pending</option>
+                                                                    <option value="Other">Other</option>
+                                                                </select>
+
+                                                            </div>
+
+                                                            <!-- Notes -->
+                                                            <div class="col-12">
+
+                                                                <label class="form-label fw-semibold">
+                                                                    Communication Notes
+                                                                    <span class="text-danger">*</span>
+                                                                </label>
+
+                                                                <textarea
+                                                                    name="notes"
+                                                                    class="form-control"
+                                                                    rows="3"
+                                                                    maxlength="10000"
+                                                                    placeholder="Example: Called the candidate. Candidate confirmed availability for the technical interview on Wednesday."
+                                                                    required
+                                                                ></textarea>
+
+                                                                <div class="form-text">
+                                                                    Record what actually happened during the communication.
+                                                                </div>
+
+                                                            </div>
+
+                                                            <!-- Next Follow-up -->
+                                                            <div class="col-12">
+
+                                                                <hr>
+
+                                                                <h6 class="fw-bold">
+                                                                    Schedule Next Follow-up
+                                                                </h6>
+
+                                                                <p class="text-muted small">
+                                                                    Optional. Fill in both fields if another contact is required.
+                                                                </p>
+
+                                                            </div>
+
+                                                            <div class="col-md-6">
+
+                                                                <label class="form-label fw-semibold">
+                                                                    Next Follow-up Date
+                                                                </label>
+
+                                                                <input
+                                                                    type="date"
+                                                                    name="next_followup_date"
+                                                                    class="form-control"
+                                                                    min="{{ today.isoformat() }}"
+                                                                >
+
+                                                            </div>
+
+                                                            <div class="col-md-6">
+
+                                                                <label class="form-label fw-semibold">
+                                                                    Next Follow-up Action
+                                                                </label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    name="next_action_text"
+                                                                    class="form-control"
+                                                                    maxlength="255"
+                                                                    placeholder="Example: Call candidate to confirm interview availability"
+                                                                >
+
+                                                            </div>
+
+                                                            <!-- Submit -->
+                                                            <div class="col-12">
+
+                                                                <div class="d-flex flex-wrap gap-2">
+
+                                                                    <button
+                                                                        type="submit"
+                                                                        class="btn btn-success"
+                                                                    >
+                                                                        <i class="bi bi-check-circle me-1"></i>
+                                                                        Save Communication & Complete
+                                                                    </button>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        class="btn btn-outline-secondary"
+                                                                        data-bs-toggle="collapse"
+                                                                        data-bs-target="#complete{{ followup.id }}"
+                                                                    >
+                                                                        Cancel
+                                                                    </button>
+
+                                                                </div>
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    </form>
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+                                {% else %}
+
+                                    <!-- Completed Communication Details -->
+                                    <tr class="collapse" id="details{{ followup.id }}">
+
+                                        <td colspan="7">
+
+                                            <div class="card border bg-light my-2">
+
+                                                <div class="card-body">
+
+                                                    <h6 class="fw-bold mb-3">
+                                                        Communication History
+                                                    </h6>
+
+                                                    <div class="row g-3">
+
+                                                        <div class="col-md-4">
+                                                            <strong>Contact Method</strong>
+                                                            <div>
+                                                                {{ followup.contact_method or 'Not recorded' }}
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <strong>Outcome</strong>
+                                                            <div>
+                                                                {{ followup.outcome or 'Not recorded' }}
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <strong>Completed At</strong>
+                                                            <div>
+                                                                {{ followup.completed_at.strftime('%d-%m-%Y %I:%M %p') if followup.completed_at else 'Not recorded' }}
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-12">
+                                                            <strong>Recruiter Notes</strong>
+                                                            <p class="mb-0 text-break">
+                                                                {{ followup.notes or 'No notes recorded.' }}
+                                                            </p>
+                                                        </div>
+
+                                                        {% if followup.next_followup_date %}
+
+                                                            <div class="col-md-6">
+                                                                <strong>Next Follow-up Date</strong>
+                                                                <div>
+                                                                    {{ followup.next_followup_date.strftime('%d-%m-%Y') }}
+                                                                </div>
+                                                            </div>
+
+                                                        {% endif %}
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <!-- Empty State -->
+                <div class="text-center py-5">
+
+                    <div class="mb-3">
+                        <i class="bi bi-calendar-check display-4 text-muted"></i>
+                    </div>
+
+                    <h5 class="text-muted">
+                        No follow-up activities found.
+                    </h5>
+
+                    <p class="text-muted">
+                        Create a follow-up to track your next recruitment action.
+                    </p>
+
+                    <a
+                        href="{{ url_for('followups.select_candidate_for_followup') }}"
+                        class="btn btn-primary"
+                    >
+                        <i class="bi bi-plus-lg me-1"></i>
+                        Add Follow-up
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

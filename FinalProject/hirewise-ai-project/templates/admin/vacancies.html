@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}All Vacancies | HireWise AI{% endblock %}
+{% block content %}
+<div class="mb-4"><h2 class="fw-bold">Vacancies</h2><p class="text-muted mb-0">View vacancies created by all recruiters.</p></div><div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Position</th><th>Recruiter</th><th>Location</th><th>Openings</th><th>Status</th><th>Created</th></tr></thead><tbody>{% for vacancy in vacancies %}<tr><td class="fw-semibold">{{ vacancy.title }}</td><td>{{ vacancy.creator.full_name if vacancy.creator else '-' }}</td><td>{{ vacancy.location or '-' }}</td><td>{{ vacancy.openings }}</td><td><span class="badge {{ 'text-bg-success' if vacancy.status|lower == 'open' else 'text-bg-secondary' }}">{{ vacancy.status|title }}</span></td><td>{{ vacancy.created_at.strftime('%d-%m-%Y') if vacancy.created_at else '-' }}</td></tr>{% else %}<tr><td colspan="6" class="text-center text-muted py-4">No vacancies created yet.</td></tr>{% endfor %}</tbody></table></div></div></div>
+{% endblock %}

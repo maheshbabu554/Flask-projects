@@ -1,0 +1,390 @@
+
+{% extends "base.html" %}
+
+{% block title %}Recruiter Registration | HireWise AI{% endblock %}
+
+{% block content %}
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/register.css') }}"
+>
+
+<div class="hw-register-page">
+
+    <div class="hw-register-wrapper">
+
+        <!-- LEFT BRANDING PANEL -->
+
+        <section class="hw-register-brand">
+
+            <div class="hw-register-brand-content">
+
+                <div class="hw-register-logo">
+
+                    <div class="hw-register-logo-symbol">
+                        H
+                    </div>
+
+                    <div>
+                        <div class="hw-register-brand-name">
+                            HireWise <span>AI</span>
+                        </div>
+
+                        <div class="hw-register-brand-subtitle">
+                            Recruitment Management System
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="hw-register-divider"></div>
+
+                <h1 class="hw-register-heading">
+                    Find Your Place.
+                    <br>
+                    Build <span>Better Teams.</span>
+                </h1>
+
+                <p class="hw-register-description">
+                    Join HireWise AI and manage your recruitment
+                    activities through one organized workspace.
+                </p>
+
+                <div class="hw-register-features">
+
+                    <div class="hw-register-feature">
+
+                        <div class="hw-register-feature-icon">✦</div>
+
+                        <div class="hw-register-feature-text">
+                            <strong>Organized Recruitment</strong>
+                            Manage vacancies and candidates efficiently.
+                        </div>
+
+                    </div>
+
+                    <div class="hw-register-feature">
+
+                        <div class="hw-register-feature-icon">⌕</div>
+
+                        <div class="hw-register-feature-text">
+                            <strong>Smart Candidate Management</strong>
+                            Keep candidate details in one place.
+                        </div>
+
+                    </div>
+
+                    <div class="hw-register-feature">
+
+                        <div class="hw-register-feature-icon">✓</div>
+
+                        <div class="hw-register-feature-text">
+                            <strong>Controlled Account Access</strong>
+                            Registration requires administrator approval.
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- Recruitment illustration -->
+
+                <div class="hw-register-art">
+
+                    <div class="hw-register-art-platform"></div>
+
+                    <div class="hw-register-art-card one">
+                        <div class="hw-register-art-avatar">👤</div>
+                        <div class="hw-register-art-line"></div>
+                        <div class="hw-register-art-line short"></div>
+                        <div class="hw-register-art-line"></div>
+                    </div>
+
+                    <div class="hw-register-art-card two">
+                        <div class="hw-register-art-avatar">👤</div>
+                        <div class="hw-register-art-line"></div>
+                        <div class="hw-register-art-line short"></div>
+                        <div class="hw-register-art-line"></div>
+                    </div>
+
+                    <div class="hw-register-art-card three">
+                        <div class="hw-register-art-avatar">👤</div>
+                        <div class="hw-register-art-line"></div>
+                        <div class="hw-register-art-line short"></div>
+                        <div class="hw-register-art-line"></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="hw-register-footer">
+                Your Talent Partner.
+                <br>
+                Your Smarter Tomorrow.
+
+                <span>
+                    HireWise AI — Recruitment Management System
+                </span>
+            </div>
+
+        </section>
+
+
+        <!-- RIGHT REGISTRATION PANEL -->
+
+        <section class="hw-register-form-panel">
+
+            <div class="hw-register-form-inner">
+
+                <div class="hw-register-form-brand">
+
+                    <div class="hw-register-form-icon">
+                        H
+                    </div>
+
+                    <h2>
+                        HireWise <span>AI</span>
+                    </h2>
+
+                    <p>
+                        Recruitment Management System
+                    </p>
+
+                    <div class="hw-register-form-divider"></div>
+
+                </div>
+
+
+                <div class="hw-register-welcome">
+
+                    <h1>Create Your Account</h1>
+
+                    <p>
+                        Submit your details for administrator approval.
+                    </p>
+
+                </div>
+
+
+                <!-- REGISTRATION FORM -->
+
+                <form
+                    method="POST"
+                    action="{{ url_for('auth.register') }}"
+                    id="hwRegisterForm"
+                >
+
+                    <!-- FULL NAME -->
+
+                    <div class="hw-register-field">
+
+                        <label for="full_name">
+                            Full Name
+                        </label>
+
+                        <div class="hw-register-input-wrap">
+
+                            <input
+                                type="text"
+                                class="hw-register-input"
+                                id="full_name"
+                                name="full_name"
+                                placeholder="Enter your full name"
+                                autocomplete="name"
+                                required
+                            >
+
+                            <span class="hw-register-input-icon">♙</span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- EMAIL -->
+
+                    <div class="hw-register-field">
+
+                        <label for="email">
+                            Email Address
+                        </label>
+
+                        <div class="hw-register-input-wrap">
+
+                            <input
+                                type="email"
+                                class="hw-register-input"
+                                id="email"
+                                name="email"
+                                placeholder="Enter your email address"
+                                autocomplete="email"
+                                required
+                            >
+
+                            <span class="hw-register-input-icon">✉</span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- WORKSPACE -->
+
+                    <div class="hw-register-field">
+
+                        <label for="role">
+                            Workspace
+                        </label>
+
+                        <select
+                            class="hw-register-select"
+                            id="role"
+                            name="role"
+                            required
+                        >
+                            <option value="recruiter">
+                                Recruiter
+                            </option>
+
+                            <option value="placement_coordinator">
+                                Placement Coordinator
+                            </option>
+                        </select>
+
+                    </div>
+
+
+                    <!-- PASSWORD -->
+
+                    <div class="hw-register-field">
+
+                        <label for="password">
+                            Password
+                        </label>
+
+                        <div class="hw-register-input-wrap">
+
+                            <input
+                                type="password"
+                                class="hw-register-input"
+                                id="password"
+                                name="password"
+                                placeholder="Create a password"
+                                autocomplete="new-password"
+                                minlength="8"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="hw-register-toggle"
+                                data-password-target="password"
+                                aria-label="Show password"
+                                aria-pressed="false"
+                            >
+                                ◉
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CONFIRM PASSWORD -->
+
+                    <div class="hw-register-field">
+
+                        <label for="confirm_password">
+                            Confirm Password
+                        </label>
+
+                        <div class="hw-register-input-wrap">
+
+                            <input
+                                type="password"
+                                class="hw-register-input"
+                                id="confirm_password"
+                                name="confirm_password"
+                                placeholder="Re-enter your password"
+                                autocomplete="new-password"
+                                minlength="8"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="hw-register-toggle"
+                                data-password-target="confirm_password"
+                                aria-label="Show confirm password"
+                                aria-pressed="false"
+                            >
+                                ◉
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- SUBMIT BUTTON -->
+
+                    <button
+                        type="submit"
+                        class="hw-register-submit"
+                        id="hwRegisterSubmit"
+                    >
+                        <span id="hwRegisterButtonText">
+                            Submit Registration
+                        </span>
+
+                        <span> → </span>
+                    </button>
+
+                </form>
+
+
+                <!-- LOGIN LINK -->
+
+                <div class="hw-register-login-link">
+
+                    Already have an account?
+
+                    <a href="{{ url_for('auth.login') }}">
+                        Back to Login
+                    </a>
+
+                </div>
+
+
+                <!-- ADMIN APPROVAL NOTICE -->
+
+                <div class="hw-register-approval">
+
+                    <div class="hw-register-approval-icon">
+                        ◆
+                    </div>
+
+                    <div>
+                        <strong>Administrator Approval Required</strong>
+                        <br>
+                        Your account will remain pending until an
+                        administrator approves your registration.
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</div>
+
+<script
+    src="{{ url_for('static', filename='js/register.js') }}"
+></script>
+
+{% endblock %}

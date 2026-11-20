@@ -1,0 +1,123 @@
+
+{% extends "base.html" %}
+
+{% block title %}Schedule Interview | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-8">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h3 class="fw-bold text-primary mb-2">
+                        Schedule Interview
+                    </h3>
+
+                    <p class="text-muted mb-4">
+                        Select a candidate and schedule an interview.
+                    </p>
+
+                    <form method="POST">
+
+                        <div class="mb-3">
+
+                            <label for="candidate_id" class="form-label fw-semibold">
+                                Select Candidate
+                            </label>
+
+                            <select
+                                class="form-select"
+                                id="candidate_id"
+                                name="candidate_id"
+                                required
+                            >
+
+                                <option value="">
+                                    Choose a candidate
+                                </option>
+
+                                {% for candidate in candidates %}
+
+                                    <option
+                                        value="{{ candidate.id }}"
+                                        {% if selected_candidate_id and selected_candidate_id|string == candidate.id|string %}selected{% endif %}
+                                    >
+                                        {{ candidate.full_name }} -
+                                        {{ candidate.vacancy.title if candidate.vacancy else 'No Vacancy' }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label for="scheduled_at" class="form-label fw-semibold">
+                                Interview Date and Time
+                            </label>
+
+                            <input
+                                type="datetime-local"
+                                class="form-control"
+                                id="scheduled_at"
+                                name="scheduled_at"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="mb-4">
+
+                            <label for="notes_raw" class="form-label fw-semibold">
+                                Initial Interview Notes (Optional)
+                            </label>
+
+                            <textarea
+                                class="form-control"
+                                id="notes_raw"
+                                name="notes_raw"
+                                rows="4"
+                                placeholder="Enter initial interview notes if available..."
+                            ></textarea>
+
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary px-4"
+                            >
+                                Schedule Interview
+                            </button>
+
+                            <a
+                                href="{{ url_for('interviews.interview_list') }}"
+                                class="btn btn-outline-secondary px-4"
+                            >
+                                Cancel
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

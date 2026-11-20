@@ -1,0 +1,12 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+instance/*
+!instance/.gitkeep
+uploads/resumes/*
+!uploads/.gitkeep
+static/uploads/*
+!static/uploads/.gitkeep

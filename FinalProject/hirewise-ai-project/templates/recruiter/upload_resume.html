@@ -1,0 +1,109 @@
+
+{% extends "base.html" %}
+
+{% block title %}Upload Resumes | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <div class="mb-4">
+                <h2 class="fw-bold">Bulk Resume Upload</h2>
+                <p class="text-muted">
+                    Upload candidate resumes. HireWise AI will help extract their information.
+                </p>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+
+                    <form
+                        method="POST"
+                        action="{{ url_for('candidates.upload_resumes') }}"
+                        enctype="multipart/form-data"
+                    >
+
+                        <div class="mb-4">
+                            <label for="vacancy_id" class="form-label fw-semibold">
+                                Select Vacancy
+                            </label>
+
+                            <select
+                                class="form-select"
+                                id="vacancy_id"
+                                name="vacancy_id"
+                                required
+                            >
+                                <option value="">Choose a vacancy</option>
+
+                                {% for vacancy in vacancies %}
+                                <option
+                                    value="{{ vacancy.id }}"
+                                    {% if selected_vacancy_id and selected_vacancy_id|string == vacancy.id|string %}selected{% endif %}
+                                >
+                                    {{ vacancy.title }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="resumes" class="form-label fw-semibold">
+                                Select Resume Files
+                            </label>
+
+                            <input
+                                type="file"
+                                class="form-control"
+                                id="resumes"
+                                name="resumes"
+                                accept=".pdf,.docx"
+                                multiple
+                                required
+                            >
+
+                            <div class="form-text">
+                                PDF and DOCX only. Maximum 5 MB per file.
+                                Maximum 20 resumes per batch.
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <strong>How it works:</strong>
+                            Upload resumes first. Candidate information will
+                            be extracted separately using AI and reviewed
+                            by the recruiter before confirmation.
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary px-4"
+                            >
+                                Upload Resumes
+                            </button>
+
+                            <a
+                                href="{{ url_for('candidates.candidate_list') }}"
+                                class="btn btn-outline-secondary px-4"
+                            >
+                                Cancel
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

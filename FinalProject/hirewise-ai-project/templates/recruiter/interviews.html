@@ -1,0 +1,1055 @@
+
+{% extends "base.html" %}
+
+{% block title %}Interview Desk | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- PAGE HEADER -->
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Interview Desk</h2>
+        <p class="text-muted mb-0">
+            Select a candidate to schedule or continue an interview.
+        </p>
+    </div>
+
+    <!-- CANDIDATE DROPDOWN -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+
+            <label for="candidateSelect" class="form-label fw-semibold">
+                Select Candidate
+            </label>
+
+            <select
+                id="candidateSelect"
+                class="form-select"
+                data-url="{{ url_for('interviews.interview_list') }}"
+            >
+                <option value="">-- Choose a candidate --</option>
+
+                {% for candidate in candidates %}
+                    <option
+                        value="{{ candidate.id }}"
+                        {% if selected_candidate and selected_candidate.id == candidate.id %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ candidate.full_name }}
+                        : {{ candidate.vacancy.title if candidate.vacancy else 'No vacancy' }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <p class="text-muted small mt-2 mb-0">
+                Candidates with a completed interview are not listed.
+                Their feedback is available on the candidate record.
+            </p>
+
+            {% if not candidates %}
+                <div class="alert alert-info mt-3 mb-0">
+                    No candidates are currently available for an interview.
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% if selected_candidate %}
+
+        <!-- CANDIDATE INFORMATION -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                    <div>
+                        <h5 class="fw-bold mb-1">
+                            {{ selected_candidate.full_name }}
+                        </h5>
+
+                        <p class="text-muted mb-0">
+                            {{ selected_candidate.email or '-' }}
+                        </p>
+                    </div>
+
+                    <span class="badge text-bg-primary">
+                        {{ selected_candidate.status }}
+                    </span>
+
+                </div>
+
+                <hr>
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <strong>Vacancy</strong>
+                        <p class="mb-0">
+                            {{ selected_candidate.vacancy.title if selected_candidate.vacancy else '-' }}
+                        </p>
+                    </div>
+
+                    <div class="col-md-6">
+                        <strong>Location</strong>
+                        <p class="mb-0">
+                            {{ selected_candidate.vacancy.location if selected_candidate.vacancy else '-' }}
+                        </p>
+                    </div>
+
+                    <div class="col-12">
+                        <strong>Required Skills</strong>
+
+                        <div class="mt-2">
+
+                            {% if selected_candidate.vacancy %}
+                                {% for skill in selected_candidate.vacancy.required_skills_json or [] %}
+                                    <span class="badge text-bg-light border me-1 mb-1">
+                                        {{ skill }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">
+                                        No required skills specified.
+                                    </span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted">
+                                    No vacancy assigned.
+                                </span>
+                            {% endif %}
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        {% if not selected_interview %}
+
+            <!-- CREATE INTERVIEW -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+
+                    <h5 class="fw-bold mb-3">
+                        Schedule Offline Interview
+                    </h5>
+
+                    <form
+                        method="POST"
+                        action="{{ url_for('interviews.create_interview', candidate_id=selected_candidate.id) }}"
+                    >
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <label for="scheduledAt" class="form-label">
+                                    Interview Date and Time
+                                </label>
+
+                                <input
+                                    type="datetime-local"
+                                    id="scheduledAt"
+                                    name="scheduled_at"
+                                    class="form-control"
+                                    required
+                                >
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="interviewerId" class="form-label">
+                                    Interviewer
+                                </label>
+
+                                <select
+                                    id="interviewerId"
+                                    name="interviewer_id"
+                                    class="form-select"
+                                    required
+                                >
+
+                                    {% for interviewer in interviewers %}
+                                        <option
+                                            value="{{ interviewer.id }}"
+                                            {% if interviewer.id == current_user.id %}
+                                                selected
+                                            {% endif %}
+                                        >
+                                            {{ interviewer.full_name }}
+                                            {% if interviewer.id == current_user.id %}
+                                                (You)
+                                            {% endif %}
+                                        </option>
+                                    {% endfor %}
+
+                                </select>
+                            </div>
+
+                            <!-- OFFLINE LOCATION -->
+                            <div class="col-12">
+                                <label for="interviewLocation" class="form-label">
+                                    Offline Interview Location
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="interviewLocation"
+                                    name="interview_location"
+                                    class="form-control"
+                                    maxlength="255"
+                                    placeholder="Enter complete office address and landmark"
+                                    required
+                                >
+
+                                <small class="text-muted">
+                                    This address will be included in the candidate's interview email.
+                                </small>
+                            </div>
+
+                            <!-- ADDITIONAL INSTRUCTIONS -->
+                            <div class="col-12">
+                                <label for="additionalInstructions" class="form-label">
+                                    Additional Instructions
+                                </label>
+
+                                <textarea
+                                    id="additionalInstructions"
+                                    name="additional_instructions"
+                                    class="form-control"
+                                    rows="4"
+                                    maxlength="5000"
+                                    placeholder="Example: Bring your updated resume, original certificates, and arrive 15 minutes early."
+                                ></textarea>
+                            </div>
+
+                        </div>
+
+                        <button type="submit" class="btn btn-primary mt-3">
+                            <i class="bi bi-calendar-check me-1"></i>
+                            Schedule Interview and Send Email
+                        </button>
+
+                    </form>
+
+                </div>
+            </div>
+
+        {% else %}
+
+            <!-- EXISTING INTERVIEW INFORMATION -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+
+                        <h5 class="fw-bold mb-0">
+                            Interview Information
+                        </h5>
+
+                        <span class="badge text-bg-primary">
+                            {{ selected_interview.status }}
+                        </span>
+
+                    </div>
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <strong>Current Interview Date</strong>
+                            <p class="mb-0">
+                                {{ selected_interview.scheduled_at.strftime('%d-%m-%Y %I:%M %p') if selected_interview.scheduled_at else 'Not scheduled' }}
+                            </p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <strong>Current Interviewer</strong>
+                            <p class="mb-0">
+                                {{ selected_interview.interviewer.full_name if selected_interview.interviewer else '-' }}
+                            </p>
+                        </div>
+
+                        <div class="col-12">
+                            <strong>Offline Interview Location</strong>
+                            <p class="mb-0">
+                                {{ selected_interview.interview_location or 'Not specified' }}
+                            </p>
+                        </div>
+
+                        <div class="col-12">
+                            <strong>Additional Instructions</strong>
+                            <p class="mb-0 text-break">
+                                {{ selected_interview.additional_instructions or 'No additional instructions.' }}
+                            </p>
+                        </div>
+
+                    </div>
+
+                    {% if selected_interview.status != 'Completed' %}
+
+                        <hr>
+
+                        <h6 class="fw-bold mb-3">
+                            Update / Reschedule Interview
+                        </h6>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('interviews.update_interview_schedule', interview_id=selected_interview.id) }}"
+                        >
+
+                            <div class="row g-3">
+
+                                <div class="col-md-6">
+                                    <label for="updateScheduledAt" class="form-label">
+                                        Interview Date and Time
+                                    </label>
+
+                                    <input
+                                        type="datetime-local"
+                                        id="updateScheduledAt"
+                                        name="scheduled_at"
+                                        class="form-control"
+                                        value="{{ selected_interview.scheduled_at.strftime('%Y-%m-%dT%H:%M') if selected_interview.scheduled_at else '' }}"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="updateInterviewerId" class="form-label">
+                                        Interviewer
+                                    </label>
+
+                                    <select
+                                        id="updateInterviewerId"
+                                        name="interviewer_id"
+                                        class="form-select"
+                                        required
+                                    >
+
+                                        {% for interviewer in interviewers %}
+                                            <option
+                                                value="{{ interviewer.id }}"
+                                                {% if selected_interview.interviewer_id == interviewer.id %}
+                                                    selected
+                                                {% endif %}
+                                            >
+                                                {{ interviewer.full_name }}
+                                            </option>
+                                        {% endfor %}
+
+                                    </select>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="updateInterviewLocation" class="form-label">
+                                        Offline Interview Location
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="updateInterviewLocation"
+                                        name="interview_location"
+                                        class="form-control"
+                                        maxlength="255"
+                                        value="{{ selected_interview.interview_location or '' }}"
+                                        placeholder="Enter complete office address and landmark"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="updateAdditionalInstructions" class="form-label">
+                                        Additional Instructions
+                                    </label>
+
+                                    <textarea
+                                        id="updateAdditionalInstructions"
+                                        name="additional_instructions"
+                                        class="form-control"
+                                        rows="4"
+                                        maxlength="5000"
+                                        placeholder="Enter instructions for the candidate..."
+                                    >{{ selected_interview.additional_instructions or '' }}</textarea>
+                                </div>
+
+                            </div>
+
+                            <button type="submit" class="btn btn-outline-primary mt-3">
+                                <i class="bi bi-pencil-square me-1"></i>
+                                Update Schedule and Notify Candidate
+                            </button>
+
+                        </form>
+
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <!-- TECHNICAL QUESTIONS -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+
+                        <div>
+                            <h5 class="fw-bold mb-1">
+                                Technical Questions
+                            </h5>
+
+                            <p class="text-muted small mb-0">
+                                AI-generated draft based on the candidate's confirmed profile and resume evidence.
+                            </p>
+                        </div>
+
+                        {% if selected_interview.status != 'Completed' %}
+                            <button
+                                type="button"
+                                id="generateQuestionsButton"
+                                class="btn btn-outline-primary"
+                                data-url="{{ url_for('ai.create_interview_questions', candidate_id=selected_candidate.id) }}"
+                            >
+                                <i class="bi bi-stars me-1"></i>
+                                Generate Questions
+                            </button>
+                        {% endif %}
+
+                    </div>
+
+                    <div
+                        id="questionMessage"
+                        class="small mb-3"
+                        aria-live="polite"
+                    ></div>
+
+                    <div id="questionResults">
+
+                        {% if question_pack and question_pack.questions_json %}
+
+                            {% for question in question_pack.questions_json %}
+
+                                <div class="border rounded p-3 mb-2">
+
+                                    {% if question is mapping %}
+
+                                        <p class="fw-semibold mb-1">
+                                            {{ loop.index }}.
+                                            {{ question.get('question', question.get('text', question|string)) }}
+                                        </p>
+
+                                        {% if question.get('skill') %}
+                                            <small class="text-muted">
+                                                Skill: {{ question.get('skill') }}
+                                            </small>
+                                        {% endif %}
+
+                                    {% else %}
+
+                                        <p class="mb-0">
+                                            {{ loop.index }}. {{ question }}
+                                        </p>
+
+                                    {% endif %}
+
+                                </div>
+
+                            {% endfor %}
+
+                        {% else %}
+
+                            <p class="text-muted mb-0">
+                                No questions yet. Generate a draft based on this candidate's resume evidence.
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+                    <div class="alert alert-info small mt-3 mb-0">
+                        AI generates question suggestions only.
+                        The interviewer controls the interview and evaluation.
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- INTERVIEW NOTES AND SUMMARY -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+
+                    <h5 class="fw-bold mb-3">
+                        Interview Notes and Summary
+                    </h5>
+
+                    <form
+                        id="interviewNotesForm"
+                        method="POST"
+                        action="{{ url_for('interviews.update_interview_notes', interview_id=selected_interview.id) }}"
+                    >
+
+                        <div class="mb-3">
+
+                            <label for="notesRaw" class="form-label fw-semibold">
+                                Original Interview Notes
+                            </label>
+
+                            <textarea
+                                id="notesRaw"
+                                name="notes_raw"
+                                class="form-control"
+                                rows="7"
+                                maxlength="15000"
+                                placeholder="Record the interviewer's original observations and answers..."
+                                {% if selected_interview.status == 'Completed' %}
+                                    readonly
+                                {% endif %}
+                            >{{ selected_interview.notes_raw or '' }}</textarea>
+
+                            <small class="text-muted">
+                                Original notes are preserved and become read-only after completion.
+                            </small>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                                <label for="summaryEdited" class="form-label fw-semibold">
+                                    AI-Organised Interview Summary
+                                </label>
+
+                                {% if selected_interview.status != 'Completed' %}
+                                    <button
+                                        type="button"
+                                        id="generateSummaryButton"
+                                        class="btn btn-outline-dark btn-sm"
+                                        data-url="{{ url_for('ai.summarize_interview', interview_id=selected_interview.id) }}"
+                                    >
+                                        <i class="bi bi-stars me-1"></i>
+                                        Generate AI Summary
+                                    </button>
+                                {% endif %}
+
+                            </div>
+
+                            <textarea
+                                id="summaryEdited"
+                                name="summary_edited"
+                                class="form-control"
+                                rows="6"
+                                placeholder="AI summary will appear here. You can edit it."
+                                {% if selected_interview.status == 'Completed' %}
+                                    readonly
+                                {% endif %}
+                            >{% if selected_interview.summary_edited is mapping or (selected_interview.summary_edited is sequence and selected_interview.summary_edited is not string) %}{{ selected_interview.summary_edited|tojson(indent=2) }}{% else %}{{ selected_interview.summary_edited or '' }}{% endif %}</textarea>
+
+                            <div
+                                id="summaryMessage"
+                                class="small mt-2"
+                                aria-live="polite"
+                            ></div>
+
+                        </div>
+
+                        {% if selected_interview.status != 'Completed' %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>
+                                Save Interview Notes
+                            </button>
+                        {% endif %}
+
+                    </form>
+
+                </div>
+            </div>
+
+            <!-- COMPLETED INTERVIEW SCORES -->
+            {% if selected_interview.status == 'Completed' %}
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+
+                        <h5 class="fw-bold mb-3">
+                            Interview Evaluation
+                        </h5>
+
+                        <div class="row g-3">
+
+                            <div class="col-6 col-lg-3">
+                                <div class="bg-light rounded p-3 text-center">
+                                    <h4 class="fw-bold text-primary">
+                                        {{ selected_interview.performance_score }}/25
+                                    </h4>
+                                    <small class="text-muted">Performance</small>
+                                </div>
+                            </div>
+
+                            <div class="col-6 col-lg-3">
+                                <div class="bg-light rounded p-3 text-center">
+                                    <h4 class="fw-bold text-primary">
+                                        {{ selected_interview.confidence_score }}/10
+                                    </h4>
+                                    <small class="text-muted">Confidence</small>
+                                </div>
+                            </div>
+
+                            <div class="col-6 col-lg-3">
+                                <div class="bg-light rounded p-3 text-center">
+                                    <h4 class="fw-bold text-primary">
+                                        {{ selected_interview.communication_score }}/15
+                                    </h4>
+                                    <small class="text-muted">Communication</small>
+                                </div>
+                            </div>
+
+                            <div class="col-6 col-lg-3">
+                                <div class="bg-primary bg-opacity-10 rounded p-3 text-center">
+                                    <h4 class="fw-bold text-primary">
+                                        {{ selected_interview.overall_score }}/50
+                                    </h4>
+                                    <small class="text-muted">Overall Score</small>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <p class="text-muted small mt-3 mb-0">
+                            These are the recruiter's own scores.
+                            AI does not score or rank candidates.
+                        </p>
+
+                    </div>
+                </div>
+
+            {% else %}
+
+                <!-- RECRUITER EVALUATION -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+
+                        <h5 class="fw-bold mb-2">
+                            Recruiter Evaluation
+                        </h5>
+
+                        <p class="text-muted small">
+                            Enter your own scores after saving the original interview notes.
+                        </p>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('interviews.complete_interview', interview_id=selected_interview.id) }}"
+                            id="completeInterviewForm"
+                        >
+
+                            <div class="row g-3">
+
+                                <div class="col-md-4">
+                                    <label for="performanceScore" class="form-label">
+                                        Performance (0–25)
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        id="performanceScore"
+                                        name="performance_score"
+                                        class="form-control score-input"
+                                        min="0"
+                                        max="25"
+                                        step="1"
+                                        value="0"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="confidenceScore" class="form-label">
+                                        Confidence (0–10)
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        id="confidenceScore"
+                                        name="confidence_score"
+                                        class="form-control score-input"
+                                        min="0"
+                                        max="10"
+                                        step="1"
+                                        value="0"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="communicationScore" class="form-label">
+                                        Communication (0–15)
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        id="communicationScore"
+                                        name="communication_score"
+                                        class="form-control score-input"
+                                        min="0"
+                                        max="15"
+                                        step="1"
+                                        value="0"
+                                        required
+                                    >
+                                </div>
+
+                            </div>
+
+                            <div class="bg-light rounded p-3 mt-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong>Overall Score</strong>
+
+                                    <h4 class="fw-bold text-primary mb-0">
+                                        <span id="overallScore">0</span>/50
+                                    </h4>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info small mt-3">
+                                These are your own scores.
+                                AI does not score or rank candidates.
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="btn btn-success"
+                                id="completeInterviewButton"
+                            >
+                                <i class="bi bi-check-circle me-1"></i>
+                                Complete Interview
+                            </button>
+
+                        </form>
+
+                    </div>
+                </div>
+
+            {% endif %}
+
+        {% endif %}
+
+    {% endif %}
+
+</div>
+
+<!-- JAVASCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Candidate selection
+    const candidateSelect = document.getElementById("candidateSelect");
+
+    if (candidateSelect) {
+        candidateSelect.addEventListener("change", function () {
+
+            const candidateId = this.value;
+            const baseUrl = candidateSelect.dataset.url;
+
+            if (candidateId) {
+                window.location.href =
+                    baseUrl + "?candidate_id=" +
+                    encodeURIComponent(candidateId);
+            } else {
+                window.location.href = baseUrl;
+            }
+        });
+    }
+
+    // Generate technical questions
+    const questionButton = document.getElementById(
+        "generateQuestionsButton"
+    );
+
+    if (questionButton) {
+        questionButton.addEventListener("click", async function () {
+
+            const message = document.getElementById("questionMessage");
+            const results = document.getElementById("questionResults");
+
+            questionButton.disabled = true;
+            questionButton.textContent = "Generating...";
+
+            message.textContent = "Generating interview questions...";
+            message.className = "small mb-3 text-muted";
+
+            try {
+                const response = await fetch(questionButton.dataset.url, {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    credentials: "same-origin"
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.error || "Question generation failed."
+                    );
+                }
+
+                results.replaceChildren();
+
+                (data.questions || []).forEach(function (question, index) {
+
+                    const card = document.createElement("div");
+                    card.className = "border rounded p-3 mb-2";
+
+                    const heading = document.createElement("p");
+                    heading.className = "fw-semibold mb-1";
+
+                    let questionText;
+
+                    if (
+                        typeof question === "object" &&
+                        question !== null
+                    ) {
+                        questionText =
+                            question.question ||
+                            question.text ||
+                            JSON.stringify(question);
+                    } else {
+                        questionText = String(question);
+                    }
+
+                    heading.textContent =
+                        (index + 1) + ". " + questionText;
+
+                    card.appendChild(heading);
+
+                    if (
+                        typeof question === "object" &&
+                        question !== null &&
+                        question.skill
+                    ) {
+                        const skill = document.createElement("small");
+                        skill.className = "text-muted";
+                        skill.textContent = "Skill: " + question.skill;
+                        card.appendChild(skill);
+                    }
+
+                    results.appendChild(card);
+                });
+
+                if (!data.questions || !data.questions.length) {
+                    const emptyMessage = document.createElement("p");
+                    emptyMessage.className = "text-muted";
+                    emptyMessage.textContent =
+                        "No questions were returned.";
+                    results.appendChild(emptyMessage);
+                }
+
+                message.textContent =
+                    data.message || "Questions generated successfully.";
+
+                message.className = "small mb-3 text-success";
+
+            } catch (error) {
+                message.textContent = error.message;
+                message.className = "small mb-3 text-danger";
+
+            } finally {
+                questionButton.disabled = false;
+                questionButton.innerHTML =
+                    '<i class="bi bi-stars me-1"></i> Generate Questions';
+            }
+        });
+    }
+
+    // Generate AI interview summary
+    const summaryButton = document.getElementById(
+        "generateSummaryButton"
+    );
+
+    if (summaryButton) {
+        summaryButton.addEventListener("click", async function () {
+
+            const summaryField = document.getElementById("summaryEdited");
+            const notesField = document.getElementById("notesRaw");
+            const notesForm = document.getElementById("interviewNotesForm");
+            const message = document.getElementById("summaryMessage");
+
+            if (!notesField || !notesField.value.trim()) {
+                message.textContent =
+                    "Please enter interview notes before generating a summary.";
+
+                message.className = "small mt-2 text-danger";
+                return;
+            }
+
+            summaryButton.disabled = true;
+            summaryButton.textContent = "Generating...";
+
+            message.textContent =
+                "Saving notes and generating the AI summary...";
+
+            message.className = "small mt-2 text-muted";
+
+            try {
+                const saveResponse = await fetch(notesForm.action, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/x-www-form-urlencoded",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: new URLSearchParams({
+                        notes_raw: notesField.value,
+                        summary_edited: summaryField.value
+                    }),
+                    credentials: "same-origin"
+                });
+
+                if (!saveResponse.ok) {
+                    throw new Error(
+                        "Could not save interview notes before summarizing."
+                    );
+                }
+
+                const response = await fetch(summaryButton.dataset.url, {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    credentials: "same-origin"
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.error || "Summary generation failed."
+                    );
+                }
+
+                summaryField.value =
+                    typeof data.summary === "string"
+                        ? data.summary
+                        : JSON.stringify(data.summary, null, 2);
+
+                message.textContent =
+                    "Summary generated. Review it and click Save Interview Notes.";
+
+                message.className = "small mt-2 text-success";
+
+            } catch (error) {
+                message.textContent = error.message;
+                message.className = "small mt-2 text-danger";
+
+            } finally {
+                summaryButton.disabled = false;
+                summaryButton.innerHTML =
+                    '<i class="bi bi-stars me-1"></i> Generate AI Summary';
+            }
+        });
+    }
+
+    // Calculate overall recruiter score
+    const scoreInputs = document.querySelectorAll(".score-input");
+    const overallScore = document.getElementById("overallScore");
+
+    function calculateOverallScore() {
+
+        if (!overallScore) {
+            return;
+        }
+
+        let total = 0;
+
+        scoreInputs.forEach(function (input) {
+
+            const value = Number(input.value);
+            const maximum = Number(input.max);
+
+            if (
+                input.value !== "" &&
+                Number.isInteger(value) &&
+                value >= 0 &&
+                value <= maximum
+            ) {
+                total += value;
+            }
+        });
+
+        overallScore.textContent = total;
+    }
+
+    scoreInputs.forEach(function (input) {
+        input.addEventListener("input", calculateOverallScore);
+    });
+
+    calculateOverallScore();
+
+    // Complete interview confirmation
+    const completeForm = document.getElementById(
+        "completeInterviewForm"
+    );
+
+    if (completeForm) {
+        completeForm.addEventListener("submit", function (event) {
+
+            const notes = document.getElementById("notesRaw");
+
+            if (!notes || !notes.value.trim()) {
+                event.preventDefault();
+
+                alert(
+                    "Please enter the original interview notes before completing the interview."
+                );
+
+                return;
+            }
+
+            let scoresAreValid = true;
+
+            scoreInputs.forEach(function (input) {
+
+                const value = Number(input.value);
+                const maximum = Number(input.max);
+
+                if (
+                    input.value === "" ||
+                    !Number.isInteger(value) ||
+                    value < 0 ||
+                    value > maximum
+                ) {
+                    scoresAreValid = false;
+                }
+            });
+
+            if (!scoresAreValid) {
+                event.preventDefault();
+
+                alert(
+                    "Please enter valid scores within the specified ranges."
+                );
+
+                return;
+            }
+
+            const confirmed = confirm(
+                "Are you sure you want to complete this interview? " +
+                "Original interview notes will become read-only."
+            );
+
+            if (!confirmed) {
+                event.preventDefault();
+            }
+        });
+    }
+
+});
+</script>
+
+{% endblock %}

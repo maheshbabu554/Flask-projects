@@ -1,0 +1,167 @@
+
+{% extends "base.html" %}
+
+{% block title %}Manage Users | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h2 class="fw-bold">Manage Users</h2>
+            <p class="text-muted mb-0">
+                View and manage recruiter accounts.
+            </p>
+        </div>
+
+        <a href="{{ url_for('admin.create_recruiter') }}"
+           class="btn btn-primary">
+            Create Recruiter
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+
+            {% if users %}
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+
+                            <td class="fw-semibold">
+                                {{ user.full_name }}
+                            </td>
+
+                            <td>{{ user.email }}</td>
+
+                            <td>
+                                {% if user.role == 'admin' %}
+                                    <span class="badge bg-primary">Admin</span>
+                                {% elif user.role == 'placement_coordinator' %}
+                                    <span class="badge bg-info text-dark">Placement Coordinator</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">Recruiter</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if user.status == 'active' %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ user.created_at.strftime('%d-%m-%Y') if user.created_at else '-' }}
+                            </td>
+
+                            <td>
+                                {% if user.role in ['recruiter', 'placement_coordinator'] %}
+
+                                <div class="d-flex flex-column gap-2">
+
+                                    <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-outline-primary btn-sm">Edit Details</a>
+                                    <details>
+                                        <summary class="btn btn-outline-primary btn-sm">
+                                            Change Password
+                                        </summary>
+
+                                        <form method="POST"
+                                              action="{{ url_for('admin.reset_recruiter_password', user_id=user.id) }}"
+                                              class="mt-2">
+
+                                            <input type="password"
+                                                   name="new_password"
+                                                   class="form-control form-control-sm mb-2"
+                                                   placeholder="New password"
+                                                   minlength="8"
+                                                   required>
+
+                                            <input type="password"
+                                                   name="confirm_password"
+                                                   class="form-control form-control-sm mb-2"
+                                                   placeholder="Confirm password"
+                                                   minlength="8"
+                                                   required>
+
+                                            <button type="submit"
+                                                    class="btn btn-primary btn-sm w-100">
+                                                Update Password
+                                            </button>
+                                        </form>
+                                    </details>
+
+                                    <form method="POST"
+                                          action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}">
+
+                                        {% if user.status == 'active' %}
+                                            <button type="submit"
+                                                    class="btn btn-outline-danger btn-sm"
+                                                    onclick="return confirm('Deactivate this recruiter?')">
+                                                Deactivate
+                                            </button>
+                                        {% else %}
+                                            <button type="submit"
+                                                    class="btn btn-outline-success btn-sm"
+                                                    onclick="return confirm('Activate this recruiter?')">
+                                                Activate
+                                            </button>
+                                        {% endif %}
+
+                                    </form>
+
+                                </div>
+
+                                {% else %}
+                                    <span class="text-muted small">
+                                        Administrator account
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+            {% else %}
+
+            <div class="text-center py-5">
+                <h5 class="text-muted">No users found.</h5>
+            </div>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="{{ url_for('admin.dashboard') }}"
+           class="btn btn-outline-secondary">
+            Back to Dashboard
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

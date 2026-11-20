@@ -1,0 +1,141 @@
+
+{% extends "base.html" %}
+
+{% block title %}Recruiter Account | HireWise AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+
+                    <h3 class="fw-bold text-primary mb-2">
+                        {% if user %}
+                            Change Recruiter Password
+                        {% else %}
+                            Create Recruiter Account
+                        {% endif %}
+                    </h3>
+
+                    {% if user %}
+                        <p class="text-muted mb-4">
+                            Set a new password for this recruiter account.
+                        </p>
+
+                        <div class="alert alert-info">
+                            <strong>Recruiter:</strong> {{ user.full_name }}<br>
+                            <strong>Email:</strong> {{ user.email }}
+                        </div>
+
+                        <form method="POST"
+                              action="{{ url_for('admin.reset_recruiter_password', user_id=user.id) }}">
+
+                            <div class="mb-3">
+                                <label for="new_password" class="form-label fw-semibold">
+                                    New Password
+                                </label>
+                                <input type="password"
+                                       class="form-control"
+                                       id="new_password"
+                                       name="new_password"
+                                       minlength="8"
+                                       required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="confirm_password" class="form-label fw-semibold">
+                                    Confirm New Password
+                                </label>
+                                <input type="password"
+                                       class="form-control"
+                                       id="confirm_password"
+                                       name="confirm_password"
+                                       minlength="8"
+                                       required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                Update Password
+                            </button>
+                        </form>
+
+                    {% else %}
+                        <p class="text-muted mb-4">
+                            Create an account for a new recruiter.
+                        </p>
+
+                        <form method="POST"
+                              action="{{ url_for('admin.create_recruiter') }}">
+
+                            <div class="mb-3">
+                                <label for="full_name" class="form-label fw-semibold">
+                                    Full Name
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="full_name"
+                                       name="full_name"
+                                       required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label fw-semibold">
+                                    Email Address
+                                </label>
+                                <input type="email"
+                                       class="form-control"
+                                       id="email"
+                                       name="email"
+                                       required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="role" class="form-label fw-semibold">Workspace Role</label>
+                                <select class="form-select" id="role" name="role" required>
+                                    <option value="recruiter">Recruiter</option>
+                                    <option value="placement_coordinator">Placement Coordinator</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password" class="form-label fw-semibold">
+                                    Temporary Password
+                                </label>
+                                <input type="password"
+                                       class="form-control"
+                                       id="password"
+                                       name="password"
+                                       minlength="8"
+                                       required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="confirm_password" class="form-label fw-semibold">
+                                    Confirm Temporary Password
+                                </label>
+                                <input type="password"
+                                       class="form-control"
+                                       id="confirm_password"
+                                       name="confirm_password"
+                                       minlength="8"
+                                       required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                Create Recruiter
+                            </button>
+                        </form>
+                    {% endif %}
+
+                    <a href="{{ url_for('admin.users') }}"
+                       class="btn btn-outline-secondary w-100 mt-3">
+                        Back to Manage Users
+                    </a>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,152 @@
+
+{% extends "base.html" %}
+
+{% block title %}Verify OTP | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4 p-md-5 text-center">
+
+                    <div class="mb-4">
+                        <i class="bi bi-shield-lock text-primary"
+                           style="font-size: 3rem;"></i>
+                    </div>
+
+                    <h3 class="fw-bold mb-2">
+                        Verify Your Email
+                    </h3>
+
+                    <p class="text-muted mb-4">
+                        Enter the six-digit verification code
+                        sent to your registered email address.
+                    </p>
+
+                    <form method="POST"
+                          action="{{ url_for('auth.verify_otp') }}"
+                          id="otpForm">
+
+                        <div class="mb-3 text-start">
+                            <label for="otp"
+                                   class="form-label fw-semibold">
+                                Verification Code
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                id="otp"
+                                name="otp"
+                                placeholder="Enter 6-digit OTP"
+                                maxlength="6"
+                                minlength="6"
+                                pattern="[0-9]{6}"
+                                inputmode="numeric"
+                                autocomplete="one-time-code"
+                                required
+                            >
+                        </div>
+
+                        <p class="small text-muted mb-3">
+                            Remaining attempts:
+                            <strong>{{ attempts_remaining }}</strong>
+                        </p>
+
+                        <button type="submit"
+                                class="btn btn-primary btn-lg w-100"
+                                id="verifyButton">
+                            Verify OTP
+                        </button>
+
+                    </form>
+
+                    <div class="mt-4">
+
+                        <p class="text-muted mb-2"
+                           id="countdownText">
+                            Resend OTP available in
+                            <strong id="countdown">
+                                {{ expires_in_seconds }}
+                            </strong>
+                            seconds.
+                        </p>
+
+                        <form method="POST"
+                              action="{{ url_for('auth.resend_otp') }}"
+                              id="resendForm"
+                              class="d-none">
+
+                            <button type="submit"
+                                    class="btn btn-outline-primary w-100">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                Resend OTP
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="{{ url_for('auth.login') }}"
+                           class="text-decoration-none small">
+                            Back to Login
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+            <p class="text-center text-muted small mt-3">
+                HireWise AI Security Verification
+            </p>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const countdownElement = document.getElementById("countdown");
+    const countdownText = document.getElementById("countdownText");
+    const resendForm = document.getElementById("resendForm");
+
+    let remainingSeconds = Number(countdownElement.textContent);
+
+    function updateCountdown() {
+
+        if (remainingSeconds <= 0) {
+
+            countdownText.classList.add("d-none");
+            resendForm.classList.remove("d-none");
+
+            return;
+        }
+
+        countdownElement.textContent = remainingSeconds;
+
+        remainingSeconds--;
+
+        setTimeout(updateCountdown, 1000);
+    }
+
+    updateCountdown();
+
+    const otpInput = document.getElementById("otp");
+
+    otpInput.addEventListener("input", function () {
+        this.value = this.value.replace(/\D/g, "").slice(0, 6);
+    });
+
+});
+</script>
+
+{% endblock %}

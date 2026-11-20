@@ -1,0 +1,132 @@
+
+{% extends "base.html" %}
+
+{% block title %}Add Follow-up | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="mb-4">
+
+        <h2 class="fw-bold">
+            <i class="bi bi-calendar-plus me-2"></i>
+            Add Follow-up
+        </h2>
+
+        <p class="text-muted mb-0">
+            Schedule the next recruitment action for a candidate.
+        </p>
+
+    </div>
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body p-4">
+
+            <form method="POST">
+
+                <!-- Candidate Details -->
+                <div class="mb-4">
+
+                    <label class="form-label fw-semibold">
+                        Candidate
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        value="{{ candidate.full_name }}"
+                        readonly
+                    >
+
+                    <div class="form-text">
+                        This follow-up will be linked to this candidate.
+                    </div>
+
+                </div>
+
+                <!-- Follow-up Action -->
+                <div class="mb-4">
+
+                    <label
+                        for="action_text"
+                        class="form-label fw-semibold"
+                    >
+                        Follow-up Action
+                        <span class="text-danger">*</span>
+                    </label>
+
+                    <textarea
+                        class="form-control"
+                        id="action_text"
+                        name="action_text"
+                        rows="4"
+                        maxlength="255"
+                        placeholder="Example: Call candidate to confirm availability for the technical interview."
+                        required
+                    ></textarea>
+
+                    <div class="form-text">
+                        Describe exactly what the recruiter needs to do.
+                        Maximum 255 characters.
+                    </div>
+
+                </div>
+
+                <!-- Due Date -->
+                <div class="mb-4">
+
+                    <label
+                        for="due_date"
+                        class="form-label fw-semibold"
+                    >
+                        Follow-up Due Date
+                        <span class="text-danger">*</span>
+                    </label>
+
+                    <input
+                        type="date"
+                        class="form-control"
+                        id="due_date"
+                        name="due_date"
+                        min="{{ today.isoformat() if today is defined else '' }}"
+                        required
+                    >
+
+                    <div class="form-text">
+                        Select the date on which this action should be completed.
+                    </div>
+
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex flex-wrap gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        <i class="bi bi-check-circle me-1"></i>
+                        Save Follow-up
+                    </button>
+
+                    <a
+                        href="{{ url_for('followups.followup_list') }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

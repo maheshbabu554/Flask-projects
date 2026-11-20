@@ -1,0 +1,134 @@
+
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <div class="mb-4">
+        <h2 class="fw-bold">Admin Dashboard</h2>
+        <p class="text-muted">
+            Manage recruiters and monitor recruitment activities.
+        </p>
+    </div>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Total Users</p>
+                    <h2 class="fw-bold text-primary">
+                        {{ total_users }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Total Recruiters</p>
+                    <h2 class="fw-bold text-success">
+                        {{ total_recruiters }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Total Vacancies</p>
+                    <h2 class="fw-bold text-info">
+                        {{ total_vacancies }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Total Candidates</p>
+                    <h2 class="fw-bold text-warning">
+                        {{ total_candidates }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                <div>
+                    <h5 class="fw-bold mb-1">Recruiter Registration Requests</h5>
+                    <p class="text-muted mb-0">
+                        Review and approve new recruiter accounts.
+                    </p>
+                </div>
+
+                <a
+                    href="{{ url_for('admin.account_requests') }}"
+                    class="btn btn-primary"
+                >
+                    View Requests
+                </a>
+
+            </div>
+
+            <hr>
+
+            <h6 class="text-muted mb-2">
+                Pending Requests
+            </h6>
+
+            <h3 class="fw-bold">
+                {{ pending_requests }}
+            </h3>
+
+        </div>
+
+    </div>
+
+    <div class="mt-4">
+
+        <h5 class="fw-bold mb-3">Quick Actions</h5>
+
+        <div class="d-flex flex-wrap gap-2">
+
+            <a
+                href="{{ url_for('admin.users') }}"
+                class="btn btn-outline-primary"
+            >
+                Manage Users
+            </a>
+
+            <a
+                href="{{ url_for('admin.create_recruiter') }}"
+                class="btn btn-outline-success"
+            >
+                Create Recruiter
+            </a>
+
+            <a
+                href="{{ url_for('auth.change_password') }}"
+                class="btn btn-outline-secondary"
+            >
+                Change Password
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

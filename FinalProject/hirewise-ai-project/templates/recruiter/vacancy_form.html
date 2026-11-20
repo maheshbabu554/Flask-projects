@@ -1,0 +1,180 @@
+
+{% extends "base.html" %}
+
+{% block title %}{% if vacancy %}Edit Vacancy{% else %}Create Vacancy{% endif %} | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-9">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h3 class="fw-bold text-primary mb-2">
+                        {% if vacancy %}
+                            Edit Vacancy
+                        {% else %}
+                            Create New Vacancy
+                        {% endif %}
+                    </h3>
+
+                    <p class="text-muted mb-4">
+                        Enter the job details and required skills.
+                    </p>
+
+                    <form method="POST">
+
+                        <div class="mb-3">
+
+                            <label for="title" class="form-label fw-semibold">
+                                Job Title
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="title"
+                                name="title"
+                                value="{{ vacancy.title if vacancy else '' }}"
+                                placeholder="Example: Python Developer"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label for="description" class="form-label fw-semibold">
+                                Job Description
+                            </label>
+
+                            <textarea
+                                class="form-control"
+                                id="description"
+                                name="description"
+                                rows="5"
+                                placeholder="Describe the job responsibilities and requirements..."
+                                required
+                            >{{ vacancy.description if vacancy else '' }}</textarea>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label for="required_skills" class="form-label fw-semibold">
+                                Required Skills
+                            </label>
+
+                            <textarea
+                                class="form-control"
+                                id="required_skills"
+                                name="required_skills"
+                                rows="3"
+                                placeholder="Python, MySQL, Flask, HTML"
+                            >{{ vacancy.required_skills_json|join(', ') if vacancy and vacancy.required_skills_json else '' }}</textarea>
+
+                            <div class="form-text">
+                                Separate each skill with a comma.
+                            </div>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label for="optional_skills" class="form-label fw-semibold">
+                                Optional Skills
+                            </label>
+
+                            <textarea
+                                class="form-control"
+                                id="optional_skills"
+                                name="optional_skills"
+                                rows="2"
+                                placeholder="Docker, Git, AWS"
+                            >{{ vacancy.optional_skills_json|join(', ') if vacancy and vacancy.optional_skills_json else '' }}</textarea>
+
+                            <div class="form-text">
+                                Enter additional preferred skills.
+                            </div>
+
+                        </div>
+
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+
+                                <label for="location" class="form-label fw-semibold">
+                                    Job Location
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="location"
+                                    name="location"
+                                    value="{{ vacancy.location if vacancy else '' }}"
+                                    placeholder="Example: Hyderabad"
+                                >
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label for="openings" class="form-label fw-semibold">
+                                    Number of Openings
+                                </label>
+
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="openings"
+                                    name="openings"
+                                    min="1"
+                                    value="{{ vacancy.openings if vacancy else 1 }}"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary px-4"
+                            >
+                                {% if vacancy %}
+                                    Update Vacancy
+                                {% else %}
+                                    Create Vacancy
+                                {% endif %}
+                            </button>
+
+                            <a
+                                href="{{ url_for('vacancies.vacancy_list') }}"
+                                class="btn btn-outline-secondary px-4"
+                            >
+                                Cancel
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

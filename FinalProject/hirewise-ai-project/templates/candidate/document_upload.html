@@ -1,0 +1,156 @@
+
+{% extends "base.html" %}
+
+{% block title %}Document Submission | Mitraz{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-9">
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 p-md-5">
+
+                    <h2 class="fw-bold mb-2">
+                        Document Submission
+                    </h2>
+
+                    <p class="text-muted mb-4">
+                        Welcome, {{ candidate.full_name }}!
+                        Please upload all applicable documents together.
+                    </p>
+
+                    <div class="alert alert-warning">
+                        <strong>Important:</strong>
+                        You can submit your documents only once.
+                        Review all files before submitting. You cannot
+                        independently replace or upload documents again.
+                        Contact your recruiter if corrections are needed.
+                    </div>
+
+                    <form method="POST"
+                          enctype="multipart/form-data"
+                          id="documentUploadForm">
+
+                        {% if csrf_token is defined %}
+                            <input type="hidden"
+                                   name="csrf_token"
+                                   value="{{ csrf_token() }}">
+                        {% endif %}
+
+                        {% set sections = [
+                            ('Identity Documents', 'Identity'),
+                            ('Personal Documents', 'Personal'),
+                            ('Educational Documents', 'Education'),
+                            ('Previous Employment Documents', 'Employment'),
+                            ('Bank Documents', 'Bank')
+                        ] %}
+
+                        {% for section_title, category in sections %}
+
+                            <h5 class="fw-bold mt-4 mb-3">
+                                {{ section_title }}
+                            </h5>
+
+                            {% for key, field in document_fields.items() %}
+
+                                {% if field.category == category %}
+
+                                    <div class="mb-3">
+
+                                        <label class="form-label fw-semibold">
+                                            {{ field.document_type }}
+
+                                            {% if field.required %}
+                                                <span class="text-danger">*</span>
+                                            {% else %}
+                                                <span class="text-muted small">
+                                                    (Optional)
+                                                </span>
+                                            {% endif %}
+
+                                            {% if key in [
+                                                'passport',
+                                                'voter_id',
+                                                'driving_license'
+                                            ] %}
+                                                <span class="text-primary small">
+                                                    (Upload at least one of these)
+                                                </span>
+                                            {% endif %}
+                                        </label>
+
+                                        <input
+                                            type="file"
+                                            name="{{ key }}"
+                                            class="form-control"
+                                            accept=".pdf,.jpg,.jpeg,.png"
+                                            {% if field.required %}required{% endif %}
+                                        >
+
+                                        <div class="form-text">
+                                            PDF, JPG or PNG. Maximum 5 MB per file.
+                                        </div>
+
+                                    </div>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                        {% endfor %}
+
+                        <div class="form-check mt-4 mb-4">
+
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="confirmDocuments"
+                                required
+                            >
+
+                            <label class="form-check-label"
+                                   for="confirmDocuments">
+                                I confirm that the uploaded documents are
+                                correct and belong to me. I understand that
+                                this is my one-time submission.
+                            </label>
+
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary btn-lg w-100"
+                            id="submitButton">
+
+                            Submit All Documents
+
+                        </button>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.getElementById("documentUploadForm").addEventListener(
+    "submit",
+    function () {
+
+        const button = document.getElementById("submitButton");
+
+        button.disabled = true;
+        button.textContent = "Submitting Documents...";
+
+    }
+);
+</script>
+
+{% endblock %}

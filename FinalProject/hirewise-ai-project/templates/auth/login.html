@@ -1,0 +1,266 @@
+
+{% extends "base.html" %}
+
+{% block title %}Login | HireWise AI{% endblock %}
+
+{% block content %}
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/login.css') }}"
+>
+
+<div class="hw-login-page">
+
+    <div class="hw-login-wrapper">
+
+        <!-- LEFT BRANDING PANEL -->
+
+        <section class="hw-brand-panel">
+
+            <div class="hw-brand-content">
+
+                <div class="hw-brand-logo">
+
+                    <div class="hw-logo-symbol">H</div>
+
+                    <div>
+                        <div class="hw-brand-name">
+                            HireWise <span>AI</span>
+                        </div>
+
+                        <div class="hw-brand-subtitle">
+                            Recruitment Management System
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="hw-brand-divider"></div>
+
+                <h1 class="hw-main-heading">
+                    Build Better Teams.
+                    Discover <span>Better Talent.</span>
+                </h1>
+
+                <p class="hw-brand-description">
+                    Smart Recruitment. Smarter Hiring.
+                    <br>
+                    Powered by AI.
+                </p>
+
+                <div class="hw-feature-list">
+
+                    <div class="hw-feature">
+                        <div class="hw-feature-icon">✦</div>
+                        <div class="hw-feature-text">
+                            <strong>Streamlined Hiring Process</strong>
+                            Manage your recruitment activities.
+                        </div>
+                    </div>
+
+                    <div class="hw-feature">
+                        <div class="hw-feature-icon">⌕</div>
+                        <div class="hw-feature-text">
+                            <strong>Smart Candidate Management</strong>
+                            Keep candidate information organized.
+                        </div>
+                    </div>
+
+                    <div class="hw-feature">
+                        <div class="hw-feature-icon">✓</div>
+                        <div class="hw-feature-text">
+                            <strong>Secure & Reliable</strong>
+                            Manage recruitment with confidence.
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Recruitment illustration -->
+
+                <div class="hw-artwork">
+
+                    <div class="hw-art-platform"></div>
+
+                    <div class="hw-profile-card card-one">
+                        <div class="hw-avatar">👤</div>
+                        <div class="hw-stars">★★★★★</div>
+                        <div class="hw-card-line"></div>
+                        <div class="hw-card-line short"></div>
+                        <div class="hw-card-line"></div>
+                    </div>
+
+                    <div class="hw-profile-card card-two">
+                        <div class="hw-avatar">👤</div>
+                        <div class="hw-stars">★★★★★</div>
+                        <div class="hw-card-line"></div>
+                        <div class="hw-card-line short"></div>
+                        <div class="hw-card-line"></div>
+                    </div>
+
+                    <div class="hw-profile-card card-three">
+                        <div class="hw-avatar">👤</div>
+                        <div class="hw-stars">★★★★★</div>
+                        <div class="hw-card-line"></div>
+                        <div class="hw-card-line short"></div>
+                        <div class="hw-card-line"></div>
+                    </div>
+
+                    <div class="hw-search-glass">👤</div>
+
+                </div>
+
+            </div>
+
+            <div class="hw-brand-footer">
+                Your Talent Partner.
+                <br>
+                Your Smarter Tomorrow.
+
+                <span>
+                    HireWise AI — Recruitment Management System
+                </span>
+            </div>
+
+        </section>
+
+
+        <!-- RIGHT LOGIN PANEL -->
+
+        <section class="hw-form-panel">
+
+            <div class="hw-form-inner">
+
+                <div class="hw-form-brand">
+
+                    <div class="hw-form-brand-icon">H</div>
+
+                    <h2>
+                        HireWise <span>AI</span>
+                    </h2>
+
+                    <p>Recruitment Management System</p>
+
+                    <div class="hw-form-divider"></div>
+
+                </div>
+
+
+                <div class="hw-welcome">
+
+                    <h1>Welcome Back!</h1>
+
+                    <p>
+                        Sign in to your account to continue
+                    </p>
+
+                </div>
+
+
+                <!-- EXISTING LOGIN FORM -->
+
+                <form
+                    method="POST"
+                    action="{{ url_for('auth.login') }}"
+                    id="hwLoginForm"
+                >
+
+                    <div class="hw-field">
+
+                        <label for="email">
+                            Email Address
+                        </label>
+
+                        <div class="hw-input-wrap">
+
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                placeholder="Enter your email address"
+                                autocomplete="email"
+                                required
+                                autofocus
+                            >
+
+                            <span class="hw-input-icon">✉</span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="hw-field">
+
+                        <label for="password">
+                            Password
+                        </label>
+
+                        <div class="hw-input-wrap">
+
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Enter your password"
+                                autocomplete="current-password"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="hw-password-toggle"
+                                id="hwPasswordToggle"
+                                aria-label="Show password"
+                                aria-pressed="false"
+                            >
+                                <span id="hwPasswordIcon">◉</span>
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="hw-login-button"
+                        id="hwLoginButton"
+                    >
+                        <span id="hwLoginButtonText">Sign In</span>
+                        <span class="hw-arrow">→</span>
+                    </button>
+
+                </form>
+
+
+                <!-- EXISTING REGISTRATION LINK -->
+
+                <div class="hw-register-section">
+
+                    Don't have a recruiter account?
+
+                    <a href="{{ url_for('auth.register') }}">
+                        Request Recruiter Registration
+                    </a>
+
+                </div>
+
+
+                <div class="hw-security-note">
+                    <span>◆</span>
+                    Secure recruitment management with HireWise AI
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+
+{% endblock %}

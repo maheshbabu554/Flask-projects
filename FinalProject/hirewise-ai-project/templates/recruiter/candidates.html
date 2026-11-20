@@ -1,0 +1,343 @@
+
+{% extends "base.html" %}
+
+{% block title %}Candidates | HireWise AI{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">Candidates</h2>
+            <p class="text-muted mb-0">
+                Review resumes, interview scores and manage your recruitment pipeline.
+            </p>
+        </div>
+
+        <a href="{{ url_for('candidates.upload_resumes') }}"
+           class="btn btn-primary">
+            <i class="bi bi-upload me-1"></i>
+            Upload Resumes
+        </a>
+
+    </div>
+
+    <!-- Candidates Table -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body">
+
+            {% if candidates %}
+
+                <!-- Search and Filters -->
+                <div class="row g-2 mb-4">
+
+                    <div class="col-12 col-md-5">
+                        <input
+                            id="candidateSearch"
+                            class="form-control"
+                            type="search"
+                            placeholder="Search by name, email or phone"
+                        >
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <select id="candidateStage" class="form-select">
+                            <option value="">All stages</option>
+
+                            {% for stage in [
+                                'New',
+                                'Reviewing',
+                                'Interview Planned',
+                                'Interviewed',
+                                'Shortlisted',
+                                'Selected',
+                                'On Hold',
+                                'Closed',
+                                'Offer Sent'
+                            ] %}
+                                <option value="{{ stage|lower }}">
+                                    {{ stage }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <select id="candidateVacancy" class="form-select">
+                            <option value="">All vacancies</option>
+
+                            {% for vacancy_name in candidates
+                                |map(attribute='vacancy.title')
+                                |unique
+                                |list %}
+
+                                {% if vacancy_name %}
+                                    <option value="{{ vacancy_name|lower }}">
+                                        {{ vacancy_name }}
+                                    </option>
+                                {% endif %}
+
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                </div>
+
+                <!-- Candidates Table -->
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Candidate</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Vacancy</th>
+                                <th>Stage</th>
+                                <th>Interview Score</th>
+                                <th>Added</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for candidate in candidates %}
+
+                                {% set score = candidate_scores.get(candidate.id) %}
+
+                                <tr
+                                    class="candidate-row"
+                                    data-search="{{ (candidate.full_name or '')|lower }} {{ (candidate.email or '')|lower }} {{ (candidate.phone or '')|lower }}"
+                                    data-stage="{{ (candidate.status or '')|lower }}"
+                                    data-vacancy="{{ (candidate.vacancy.title if candidate.vacancy else '')|lower }}"
+                                >
+
+                                    <!-- Number -->
+                                    <td>{{ loop.index }}</td>
+
+                                    <!-- Candidate -->
+                                    <td class="fw-semibold">
+                                        {{ candidate.full_name or 'Pending AI Extraction' }}
+                                    </td>
+
+                                    <!-- Email -->
+                                    <td>
+                                        {{ candidate.email or '-' }}
+                                    </td>
+
+                                    <!-- Phone -->
+                                    <td>
+                                        {{ candidate.phone or '-' }}
+                                    </td>
+
+                                    <!-- Vacancy -->
+                                    <td>
+                                        {{ candidate.vacancy.title
+                                           if candidate.vacancy else '-' }}
+                                    </td>
+
+                                    <!-- Stage -->
+                                    <td>
+                                        <span class="badge text-bg-light border">
+                                            {{ candidate.status }}
+                                        </span>
+                                    </td>
+
+                                    <!-- Interview Score -->
+                                    <td>
+
+                                        {% if score is not none %}
+
+                                            <span class="badge text-bg-success">
+                                                {{ "%.0f"|format(score) }}/50
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+                                                Not completed
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <!-- Added Date -->
+                                    <td>
+                                        {{ candidate.created_at.strftime('%d-%m-%Y')
+                                           if candidate.created_at else '-' }}
+                                    </td>
+
+                                    <!-- Actions -->
+                                    <td>
+
+                                        <div class="d-flex gap-2 flex-wrap">
+
+                                            <!-- View -->
+                                            <a
+                                                href="{{ url_for(
+                                                    'candidates.candidate_detail',
+                                                    candidate_id=candidate.id
+                                                ) }}"
+                                                class="btn btn-outline-primary btn-sm"
+                                            >
+                                                <i class="bi bi-eye me-1"></i>
+                                                View
+                                            </a>
+
+                                            <!-- Soft Delete -->
+                                            <form
+                                                method="POST"
+                                                action="{{ url_for(
+                                                    'candidates.delete_candidate',
+                                                    candidate_id=candidate.id
+                                                ) }}"
+                                                onsubmit="return confirm('Are you sure you want to archive this candidate? Their resume and recruitment history will be preserved.');"
+                                            >
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-outline-danger btn-sm"
+                                                >
+                                                    <i class="bi bi-trash me-1"></i>
+                                                    Delete
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <!-- No Filter Results -->
+                <div id="noFilterResults"
+                     class="text-center py-4 d-none">
+
+                    <p class="text-muted mb-0">
+                        No candidates match your search or filters.
+                    </p>
+
+                </div>
+
+            {% else %}
+
+                <!-- Empty State -->
+                <div class="text-center py-5">
+
+                    <i class="bi bi-people display-4 text-muted"></i>
+
+                    <h5 class="text-muted mt-3">
+                        No candidates found.
+                    </h5>
+
+                    <p class="text-muted">
+                        Upload PDF or DOCX resumes to begin.
+                    </p>
+
+                    <a
+                        href="{{ url_for('candidates.upload_resumes') }}"
+                        class="btn btn-primary"
+                    >
+                        <i class="bi bi-upload me-1"></i>
+                        Upload Resumes
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const search = document.getElementById('candidateSearch');
+    const stage = document.getElementById('candidateStage');
+    const vacancy = document.getElementById('candidateVacancy');
+    const noResults = document.getElementById('noFilterResults');
+
+    if (!search || !stage || !vacancy) {
+        return;
+    }
+
+    const rows = Array.from(
+        document.querySelectorAll('.candidate-row')
+    );
+
+    function filterRows() {
+
+        const query = search.value.trim().toLowerCase();
+
+        let visibleCount = 0;
+
+        rows.forEach(function (row) {
+
+            const matchesSearch =
+                row.dataset.search.includes(query);
+
+            const matchesStage =
+                !stage.value ||
+                row.dataset.stage === stage.value;
+
+            const matchesVacancy =
+                !vacancy.value ||
+                row.dataset.vacancy === vacancy.value;
+
+            const visible =
+                matchesSearch &&
+                matchesStage &&
+                matchesVacancy;
+
+            row.classList.toggle('d-none', !visible);
+
+            if (visible) {
+                visibleCount++;
+            }
+
+        });
+
+        if (noResults) {
+            noResults.classList.toggle(
+                'd-none',
+                visibleCount !== 0
+            );
+        }
+
+    }
+
+    search.addEventListener('input', filterRows);
+    stage.addEventListener('change', filterRows);
+    vacancy.addEventListener('change', filterRows);
+
+});
+
+</script>
+
+{% endblock %}
