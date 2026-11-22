@@ -2,13 +2,16 @@
 """
 Main application file for HireWise AI.
 
-Creates the Flask application, initializes extensions,
-configures authentication, and registers application routes.
+Creates and configures the Flask application, initializes
+extensions, configures authentication, and registers routes.
 """
 
+import os
 from pathlib import Path
 
-from flask import Flask, redirect, url_for
+import zcatalyst_sdk
+
+from flask import Flask, redirect, url_for, request, g
 
 from config import Config
 from extensions import db, login_manager, migrate
@@ -30,6 +33,21 @@ def create_app():
     app.config["MAX_CONTENT_LENGTH"] = (
         20 * 5 * 1024 * 1024
     ) + (1 * 1024 * 1024)
+
+    # -----------------------------------------------------
+    # CATALYST SDK INITIALIZATION
+    # -----------------------------------------------------
+
+    @app.before_request
+    def initialize_catalyst():
+        """
+        Initialize Catalyst SDK when running inside AppSail.
+
+        Local development continues without Catalyst initialization.
+        """
+
+        if os.getenv("X_ZOHO_CATALYST_LISTEN_PORT"):
+            g.catalyst_app = zcatalyst_sdk.initialize(req=request)
 
     # -----------------------------------------------------
     # INITIALIZE FLASK EXTENSIONS
@@ -94,7 +112,7 @@ def create_app():
             return None
 
     # -----------------------------------------------------
-    # REGISTER APPLICATION BLUEPRINTS
+    # IMPORT APPLICATION BLUEPRINTS
     # -----------------------------------------------------
 
     from routes.auth import auth_bp
@@ -109,7 +127,7 @@ def create_app():
     from routes.document_upload import document_upload_bp
 
     # -----------------------------------------------------
-    # BLUEPRINT REGISTRATION
+    # REGISTER APPLICATION BLUEPRINTS
     # -----------------------------------------------------
 
     app.register_blueprint(auth_bp)
@@ -140,7 +158,7 @@ def create_app():
 
     @app.route("/")
     def index():
-        """Send visitors to login or their role dashboard."""
+        """Redirect visitors to login or their dashboard."""
 
         from flask_login import current_user
 

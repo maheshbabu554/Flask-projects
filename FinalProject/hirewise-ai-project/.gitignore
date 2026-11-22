@@ -10,3 +10,14 @@ uploads/resumes/*
 !uploads/.gitkeep
 static/uploads/*
 !static/uploads/.gitkeep
+
+# Python virtual environments
+catalyst_env/
+.venv/
+
+# Database backups
+*.sql
+
+# Temporary files
+*.log
+.DS_Store
